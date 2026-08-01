@@ -18,7 +18,7 @@ scaffold remain normal development work.
 Install the tagged release with [pipx](https://pipx.pypa.io/):
 
 ```bash
-pipx install "git+https://github.com/lilabrooks/clispecforge.git@v0.4.0"
+pipx install "git+https://github.com/lilabrooks/clispecforge.git@v0.5.0"
 clispecforge providers
 ```
 
