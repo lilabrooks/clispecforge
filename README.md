@@ -25,7 +25,7 @@ clispecforge providers
 The base installation uses only the Python standard library. Python 3.12 or
 newer is required.
 
-## 60-second mechanics demo
+## Quick mechanics demo
 
 The default `echo` provider needs no credentials or network access. In Bash or
 Zsh, use it to exercise preview and write behavior with a deterministic file
@@ -37,7 +37,7 @@ demo_prompt=$'FILE: hello.py\n```python\nprint("Hello from CliSpecForge")\n```'
 
 clispecforge build --out-dir "$demo_dir" "$demo_prompt"
 clispecforge build --apply --out-dir "$demo_dir" "$demo_prompt"
-python "$demo_dir/hello.py"
+python3 "$demo_dir/hello.py"
 ```
 
 The first build prints a one-file plan. The second writes `hello.py`, and the
@@ -65,7 +65,7 @@ preview a generation:
 export OPENAI_API_KEY="your-key"
 export CLISPECFORGE_PROVIDER=openai
 
-clispecforge build --spec specs/cli/example.md \
+clispecforge build --spec example \
   "Implement this spec as a small installable Python package"
 ```
 
@@ -145,6 +145,8 @@ not load `.env` files.
 [`examples/greeting-cli`](examples/greeting-cli) is a small, independently
 packaged CLI that illustrates the sort of output this project targets. It
 imports no CliSpecForge code and is excluded from the CliSpecForge wheel.
+
+From a development checkout with `.[dev]` installed:
 
 ```bash
 python -m pytest examples/greeting-cli/tests
