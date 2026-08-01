@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "clispecforge"
-version = "0.5.0"
+version = "0.6.0"
 description = "Generate reviewable Python CLI scaffolds from Markdown specifications."
 readme = "README.md"
 requires-python = ">=3.12"
@@ -51,6 +51,7 @@ include = [
     "specs",
     "skills",
     "examples",
+    "scripts",
     "docs",
     "README.md",
     "CONTRIBUTING.md",

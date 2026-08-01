@@ -24,7 +24,7 @@ SNYK_CODE_SEVERITY ?= low
 SNYK_ORG_ARG := $(if $(SNYK_ORG),--org=$(SNYK_ORG),)
 SNYK_PYTHON_ARG := --command=$(SNYK_PYTHON)
 
-.PHONY: check lint format typecheck test coverage snyk snyk-open-source snyk-code check-all
+.PHONY: check lint format typecheck test coverage smoke-replay snyk snyk-open-source snyk-code check-all
 
 check: lint typecheck coverage
 
@@ -48,6 +48,9 @@ coverage:
 	}
 	$(PYTHON) -m coverage run -m pytest
 	$(PYTHON) -m coverage report
+
+smoke-replay:
+	$(PYTHON) scripts/replay_smoke.py
 
 snyk: snyk-open-source snyk-code
 

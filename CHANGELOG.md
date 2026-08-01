@@ -4,6 +4,27 @@ All notable changes to this project are documented here. The format is based on 
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-08-01
+
+### Added
+
+- Added a deterministic recorded-response smoke test that writes, builds,
+  installs, and runs a generated greeting package outside the checkout.
+
+### Changed
+
+- Dry-run plans now print terminal-safe file contents for review before
+  `--apply`.
+- Consolidated test, coverage, lint, formatting, and typing CI into one quality
+  workflow across Python 3.12 through 3.14.
+
+### Fixed
+
+- Preserve generated Markdown files containing fenced examples by matching
+  variable-length opening and closing fences.
+- Reject generated paths containing control or formatting characters and
+  escape those characters in previewed file contents.
+
 ## [0.5.0] - 2026-08-01
 
 ### Added

@@ -1,11 +1,11 @@
-name: Code quality
+name: Quality
 
 on:
   push:
   pull_request:
 
 jobs:
-  quality:
+  check:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -25,11 +25,9 @@ jobs:
       - name: Install package
         run: python -m pip install -e ".[dev,anthropic,openai]"
 
-      - name: Run Ruff lint
-        run: ruff check .
+      - name: Run repository gate
+        run: make check PYTHON=python RUFF=ruff MYPY=mypy PYTEST=pytest
 
-      - name: Run Ruff format check
-        run: ruff format --check .
-
-      - name: Run mypy
-        run: mypy
+      - name: Run deterministic replay smoke test
+        if: matrix.python-version == '3.14'
+        run: make smoke-replay PYTHON=python

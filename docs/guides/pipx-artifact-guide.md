@@ -35,7 +35,7 @@ pipx install "git+https://github.com/lilabrooks/clispecforge.git@main"
 Install the tagged release:
 
 ```bash
-pipx install "git+https://github.com/lilabrooks/clispecforge.git@v0.5.0"
+pipx install "git+https://github.com/lilabrooks/clispecforge.git@v0.6.0"
 ```
 
 Upgrade later:
@@ -86,8 +86,8 @@ python -m build
 Expected output files:
 
 ```text
-dist/clispecforge-0.5.0.tar.gz
-dist/clispecforge-0.5.0-py3-none-any.whl
+dist/clispecforge-0.6.0.tar.gz
+dist/clispecforge-0.6.0-py3-none-any.whl
 ```
 
 The artifact names use the `clispecforge` distribution name. The wheel installs the `clispecforge` command.
@@ -95,7 +95,7 @@ The artifact names use the `clispecforge` distribution name. The wheel installs 
 ## 6. Install the wheel with pipx
 
 ```bash
-pipx install dist/clispecforge-0.5.0-py3-none-any.whl
+pipx install dist/clispecforge-0.6.0-py3-none-any.whl
 ```
 
 If `clispecforge` is already installed with pipx, reinstall it:
@@ -122,13 +122,13 @@ clispecforge spec check example
 The portable file to share is the wheel:
 
 ```text
-dist/clispecforge-0.5.0-py3-none-any.whl
+dist/clispecforge-0.6.0-py3-none-any.whl
 ```
 
 On another machine with Python and pipx installed:
 
 ```bash
-pipx install /path/to/clispecforge-0.5.0-py3-none-any.whl
+pipx install /path/to/clispecforge-0.6.0-py3-none-any.whl
 clispecforge providers
 ```
 

@@ -58,8 +58,23 @@ def test_build_dry_run_prints_plan_without_writing(
     assert exit_code == 0
     assert "Plan: 1 file(s)" in captured.out
     assert str(target) in captured.out
+    assert "hello world" in captured.out
+    assert f"--- end {target} ---" in captured.out
     assert "Re-run with --apply" in captured.out
     assert not target.exists()
+
+
+def test_build_dry_run_escapes_terminal_control_characters(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    task = "\n".join(["FILE: message.txt", "```", "hello\x1b[2Jworld", "```"])
+
+    exit_code = main(["build", "--out-dir", str(tmp_path), task])
+
+    captured = capsys.readouterr()
+    assert exit_code == 0
+    assert "hello\\x1b[2Jworld" in captured.out
+    assert "\x1b" not in captured.out
 
 
 def test_build_apply_writes_the_file(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
