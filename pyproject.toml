@@ -50,6 +50,7 @@ include = [
     "tests",
     "specs",
     "skills",
+    "examples",
     "docs",
     "README.md",
     "CONTRIBUTING.md",
@@ -59,13 +60,13 @@ include = [
 
 [tool.pytest.ini_options]
 addopts = "-q --strict-config --strict-markers"
-pythonpath = ["src"]
-testpaths = ["tests"]
+pythonpath = ["src", "examples/greeting-cli/src"]
+testpaths = ["tests", "examples/greeting-cli/tests"]
 
 [tool.ruff]
 line-length = 100
 target-version = "py312"
-src = ["src", "tests"]
+src = ["src", "tests", "examples"]
 
 [tool.ruff.lint]
 select = [
@@ -98,17 +99,17 @@ ignore = [
 python_version = "3.12"
 strict = true
 mypy_path = "src"
-files = ["src/agent_cli"]
+files = ["src/agent_cli", "examples/greeting-cli/src/greeting_cli"]
 
 [[tool.mypy.overrides]]
-module = ["anthropic", "openai"]
+module = ["anthropic", "anthropic.*", "openai", "openai.*"]
 ignore_missing_imports = true
 
 [tool.coverage.run]
 branch = true
-source = ["agent_cli"]
+source = ["agent_cli", "greeting_cli"]
 
 [tool.coverage.report]
 show_missing = true
 skip_covered = true
-fail_under = 70
+fail_under = 90

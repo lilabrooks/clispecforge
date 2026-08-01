@@ -4,6 +4,26 @@ All notable changes to this project are documented here. The format is based on 
 
 ## [Unreleased]
 
+### Added
+
+- Added a standalone greeting CLI example with its own package metadata and tests.
+
+### Changed
+
+- Rewrote the README around the narrow product boundary and a verified, credential-free mechanics demo.
+- Raised the enforced coverage floor to 90% with additional CLI boundary, provider-response, and installed-resource tests.
+- Made `make check` enforce coverage as part of the everyday quality gate.
+- Removed or qualified documentation and skill claims that implied CliSpecForge builds, installs, executes, or verifies model-generated artifacts.
+
+### Removed
+
+- Removed the embedded machine-details fixture from the CliSpecForge package.
+
+### Fixed
+
+- Allow strict mypy checks from a development install when the optional provider SDKs are absent.
+- Keep `make check-all` isolated while enforcing the complete gate on every supported Python version.
+
 ## [0.4.0] - 2026-08-01
 
 ### Changed

@@ -14,7 +14,7 @@ List the command names, subcommands, flags, and arguments.
 Example:
 
 ```bash
-agent example run --name Lila
+example run --name Lila
 ```
 
 ## Inputs
@@ -32,4 +32,3 @@ List concrete checks the implementation must pass.
 Example:
 
 - Given `--name Lila`, output includes `Hello, Lila`.
-

@@ -26,9 +26,14 @@ network call. Anthropic and OpenAI support is installed through optional extras.
 - `providers/` contains vendor adapters behind the `LanguageModel` protocol.
 - `specs/` and `skills/` load and validate Markdown documents.
 - `runtime/` is the composition root.
+- `examples/` contains a standalone output sample with its own package metadata
+  and tests.
 
 Core modules do not import providers. Provider SDK imports happen only when
 their adapter receives a request.
+
+The example package does not import CliSpecForge and is not included in its
+wheel.
 
 ## Scope
 

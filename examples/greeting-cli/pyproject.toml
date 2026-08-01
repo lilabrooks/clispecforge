@@ -1,0 +1,18 @@
+[build-system]
+requires = ["hatchling>=1.25"]
+build-backend = "hatchling.build"
+
+[project]
+name = "clispecforge-example-greeting-cli"
+version = "0.1.0"
+description = "A small greeting CLI example for CliSpecForge."
+readme = "README.md"
+requires-python = ">=3.12"
+license = "MIT"
+dependencies = []
+
+[project.scripts]
+greet = "greeting_cli.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/greeting_cli"]

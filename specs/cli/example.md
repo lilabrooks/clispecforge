@@ -1,15 +1,15 @@
 ---
-status: draft
+status: current
 owner: product
 deciders: [Lila Brooks]
 ---
-# Example greeting command
+# Greeting CLI
 
 ## Purpose
-Add a small greeting command that proves the spec-to-implementation loop works.
+Print a greeting for one required name.
 
 ## Commands
-- `agent greet NAME`
+- `greet NAME`
 
 ## Inputs
 - `NAME`: required positional argument.
@@ -22,6 +22,6 @@ Add a small greeting command that proves the spec-to-implementation loop works.
 The command should preserve the exact name passed by the user.
 
 ## Acceptance tests
-- Given `agent greet Lila`, stdout is `Hello, Lila`.
-- Given `agent greet "Python CLI"`, stdout is `Hello, Python CLI`.
-
+- Given `greet Lila`, stdout is `Hello, Lila`.
+- Given `greet "Python CLI"`, stdout is `Hello, Python CLI`.
+- Given no name, the command returns parser exit code `2`.

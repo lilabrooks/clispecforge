@@ -34,7 +34,9 @@ file-output contract, or write safety.
 ## Verification
 
 - Everyday gate: `make check`
-- Coverage: `make coverage`
+- Coverage-only gate: `make coverage`
 - All supported Pythons, 3.12 through 3.14: `make check-all`
 - Package smoke test for packaging changes: build a wheel, install it in a
   fresh environment, and run `clispecforge providers` outside the checkout.
+- Example smoke test for example changes: build `examples/greeting-cli`, install
+  its wheel in a fresh environment, and run `greet Lila` outside the checkout.
