@@ -31,6 +31,15 @@ _TASK_WITH_DUPLICATE_FILE = "\n".join(
     ]
 )
 
+_TASK_WITH_UNSAFE_FILE = "\n".join(
+    [
+        "FILE: ../outside.txt",
+        "```",
+        "escaped",
+        "```",
+    ]
+)
+
 
 def test_build_attaches_file_output_contract_skill() -> None:
     text, files = build_agent_task("say hi, no files needed")
@@ -96,6 +105,18 @@ def test_build_apply_rejects_duplicate_targets(
     assert exit_code == 1
     assert "Error: Duplicate generated file target" in captured.err
     assert not (tmp_path / "same.txt").exists()
+
+
+def test_build_rejects_unsafe_target_before_preview(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    exit_code = main(["build", "--out-dir", str(tmp_path), _TASK_WITH_UNSAFE_FILE])
+
+    captured = capsys.readouterr()
+    assert exit_code == 1
+    assert captured.out == ""
+    assert "Error: Unsafe or invalid file path" in captured.err
+    assert not (tmp_path.parent / "outside.txt").exists()
 
 
 def test_build_warns_when_no_file_blocks_found(

@@ -9,12 +9,12 @@ from agent_cli.providers.openai import OpenAILanguageModel
 
 
 class _FakeMessage:
-    def __init__(self, content: str) -> None:
+    def __init__(self, content: str | None) -> None:
         self.content = content
 
 
 class _FakeChoice:
-    def __init__(self, content: str, finish_reason: str = "stop") -> None:
+    def __init__(self, content: str | None, finish_reason: str = "stop") -> None:
         self.message = _FakeMessage(content)
         self.finish_reason = finish_reason
 
@@ -26,9 +26,9 @@ class _FakeUsage:
 
 
 class _FakeCompletion:
-    def __init__(self, text: str, model: str, finish_reason: str = "stop") -> None:
+    def __init__(self, text: str | None, model: str, finish_reason: str = "stop") -> None:
         self.choices = [_FakeChoice(text, finish_reason)]
-        self.usage = _FakeUsage(prompt_tokens=8, completion_tokens=4)
+        self.usage: _FakeUsage | None = _FakeUsage(prompt_tokens=8, completion_tokens=4)
         self.model = model
 
 
@@ -95,3 +95,27 @@ def test_complete_rejects_truncated_response(monkeypatch: pytest.MonkeyPatch) ->
 
     with pytest.raises(ResponseTruncatedError, match="configured 2048-token output limit"):
         model.complete(request)
+
+
+def test_complete_handles_assistant_context_and_missing_optional_response_fields(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    client = _install_fake_openai(monkeypatch)
+
+    def create_without_optional_fields(**kwargs: object) -> _FakeCompletion:
+        client.chat.completions.calls.append(kwargs)
+        response = _FakeCompletion(text=None, model=str(kwargs["model"]))
+        response.usage = None
+        return response
+
+    client.chat.completions.create = create_without_optional_fields  # type: ignore[method-assign]
+    model = OpenAILanguageModel()
+    request = CompletionRequest(messages=(Message(role="assistant", content="prior reply"),))
+
+    response = model.complete(request)
+
+    assert client.chat.completions.calls[0]["messages"] == [
+        {"role": "assistant", "content": "prior reply"}
+    ]
+    assert response.text == ""
+    assert response.usage == {}

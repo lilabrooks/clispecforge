@@ -24,7 +24,8 @@ Use this for any Python source change, especially new modules, parser code, prov
 - Do not add runtime dependencies unless the spec requires them.
 
 ## Verification
-- Run the unit tests.
-- Run `python -m compileall -q src tests`.
-- Run `ruff check .`, `ruff format --check .`, and `mypy`.
-- Any skipped check must be named with the reason.
+- Include unit tests for the proposed behavior.
+- Recommend `python -m compileall -q src tests`, `ruff check .`,
+  `ruff format --check .`, and `mypy` for the developer to run after applying
+  the files.
+- Do not report those checks as passed; CliSpecForge does not run them.

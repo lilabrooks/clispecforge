@@ -21,8 +21,10 @@ Run the everyday gate:
 make check
 ```
 
-Run `make coverage` when behavior changes. Packaging changes also need a wheel
-build and a fresh-environment smoke test from outside the checkout.
+The everyday gate includes the enforced branch-coverage floor. Packaging
+changes also need a wheel build and a fresh-environment smoke test from outside
+the checkout. Changes under `examples/greeting-cli/` also require its
+independent build and `greet Lila` smoke test.
 
 Keep tests focused on observable behavior. Use `tmp_path`, `capsys`, and
 `monkeypatch` for filesystem, terminal, and provider boundaries.

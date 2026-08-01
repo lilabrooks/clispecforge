@@ -26,5 +26,5 @@ Use this whenever implementing or changing Python files, tests, docs, specs, or 
 - The change has no speculative features.
 - New helpers have more than one real caller or make the code easier to read now.
 - The diff contains no drive-by refactors.
-- Existing tests still pass after the change.
-
+- Identify the existing tests the developer should rerun after applying the files.
+- Do not claim that tests passed; CliSpecForge does not execute them.

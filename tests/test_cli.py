@@ -29,7 +29,7 @@ def test_run_command_writes_agent_result(capsys: pytest.CaptureFixture[str]) -> 
 
 
 def test_run_command_can_attach_all_skills(capsys: pytest.CaptureFixture[str]) -> None:
-    exit_code = main(["run", "--spec", "my-cli-details", "--all-skills", "build it"])
+    exit_code = main(["run", "--spec", "example", "--all-skills", "build it"])
 
     captured = capsys.readouterr()
     assert exit_code == 0

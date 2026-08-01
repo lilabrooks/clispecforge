@@ -26,4 +26,5 @@ Use this when adding or changing commands, output formats, errors, file IO, envi
 - New CLI behavior has at least one success test.
 - New error behavior has at least one failure test.
 - File-writing commands assert both file content and terminal output.
-- The full pytest suite passes.
+- Name the pytest command the developer should run after applying the files.
+- Do not claim that tests passed; CliSpecForge does not execute them.
