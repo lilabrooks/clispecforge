@@ -580,8 +580,7 @@ The project keeps provider details behind one small protocol:
 
 ```python
 class LanguageModel(Protocol):
-    def complete(self, request: CompletionRequest) -> CompletionResponse:
-        ...
+    def complete(self, request: CompletionRequest) -> CompletionResponse: ...
 ```
 
 Agents receive a `LanguageModel` instance instead of constructing provider clients directly. That keeps the CLI, agent logic, tests, and future provider adapters loosely coupled.
