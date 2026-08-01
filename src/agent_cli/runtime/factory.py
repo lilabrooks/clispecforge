@@ -5,12 +5,16 @@ from agent_cli.providers.registry import create_provider
 
 
 def build_model(settings: Settings) -> LanguageModel:
-    return create_provider(settings.provider, model=settings.model)
+    return create_provider(
+        settings.provider,
+        model=settings.model,
+        max_tokens=settings.max_tokens,
+    )
 
 
 def build_agent(settings: Settings) -> Agent:
     return Agent(
-        name="default-agent",
+        name="clispecforge",
         system_prompt=settings.system_prompt,
         model=build_model(settings),
     )

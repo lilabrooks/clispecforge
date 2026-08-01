@@ -1,19 +1,20 @@
-# Spec Agent CLI
+# CliSpecForge
 
 [![Status](https://img.shields.io/badge/status-preview-orange)](#project-status)
-[![Tests](https://github.com/lilabrooks/spec-agent-cli/actions/workflows/tests.yml/badge.svg)](https://github.com/lilabrooks/spec-agent-cli/actions/workflows/tests.yml)
-[![Code quality](https://github.com/lilabrooks/spec-agent-cli/actions/workflows/code-quality.yml/badge.svg)](https://github.com/lilabrooks/spec-agent-cli/actions/workflows/code-quality.yml)
-[![Coverage](https://github.com/lilabrooks/spec-agent-cli/actions/workflows/coverage.yml/badge.svg)](https://github.com/lilabrooks/spec-agent-cli/actions/workflows/coverage.yml)
-[![Snyk](https://github.com/lilabrooks/spec-agent-cli/actions/workflows/snyk.yml/badge.svg)](https://github.com/lilabrooks/spec-agent-cli/actions/workflows/snyk.yml)
+[![Tests](https://github.com/lilabrooks/clispecforge/actions/workflows/tests.yml/badge.svg)](https://github.com/lilabrooks/clispecforge/actions/workflows/tests.yml)
+[![Code quality](https://github.com/lilabrooks/clispecforge/actions/workflows/code-quality.yml/badge.svg)](https://github.com/lilabrooks/clispecforge/actions/workflows/code-quality.yml)
+[![Coverage](https://github.com/lilabrooks/clispecforge/actions/workflows/coverage.yml/badge.svg)](https://github.com/lilabrooks/clispecforge/actions/workflows/coverage.yml)
+[![Snyk](https://github.com/lilabrooks/clispecforge/actions/workflows/snyk.yml/badge.svg)](https://github.com/lilabrooks/clispecforge/actions/workflows/snyk.yml)
 [![Spec-driven](https://img.shields.io/badge/spec--driven-Markdown-blue)](#spec-workflow)
 [![Agent-ready](https://img.shields.io/badge/agent--ready-yes-green)](#skill-workflow)
 [![Model-agnostic](https://img.shields.io/badge/model--agnostic-yes-purple)](#provider-design)
 [![pipx installable](https://img.shields.io/badge/pipx-installable-blue)](docs/guides/pipx-artifact-guide.md)
-[![docs - OKF 0.1](https://img.shields.io/badge/docs-OKF%200.1-blue)](docs/index.md)
-[![OKF docs validated](https://img.shields.io/badge/OKF%20docs-validated-brightgreen)](#quality-standard)
-[![specs & ADRs - included](https://img.shields.io/badge/specs%20%26%20ADRs-included-teal)](docs/specs/index.md)
 
-This repository has one purpose: to dogfood [claude-okf-repo-kit](https://github.com/lilabrooks/claude-okf-repo-kit) and provide the proven chassis for a new template based on that kit, focused specifically on creating Python CLI apps. The `agent` CLI is the working project used to test the kit and prove the template's spec-driven workflow, reusable skills, safe file generation, provider-neutral model access, and quality gate.
+CliSpecForge is a small, single-pass generator for Python command-line tools.
+It turns a Markdown CLI contract and optional instruction skills into a
+reviewable file plan through Anthropic, OpenAI, or a local echo provider.
+Generation ends after one model response; developers review, test, and iterate
+on the resulting scaffold.
 
 <details open>
 <summary><strong>📖 Table of Contents</strong></summary>
@@ -22,10 +23,11 @@ This repository has one purpose: to dogfood [claude-okf-repo-kit](https://github
 - [Flow](#flow)
 - [Quick Start](#quick-start)
 - [Configuration](#configuration)
-  - [`AGENT_CLI_PROVIDER`](#agent_cli_provider)
-  - [`AGENT_CLI_MODEL`](#agent_cli_model)
+  - [`CLISPECFORGE_PROVIDER`](#clispecforge_provider)
+  - [`CLISPECFORGE_MODEL`](#clispecforge_model)
     - [How to choose a model](#how-to-choose-a-model)
-  - [`AGENT_CLI_SYSTEM_PROMPT`](#agent_cli_system_prompt)
+  - [`CLISPECFORGE_MAX_TOKENS`](#clispecforge_max_tokens)
+  - [`CLISPECFORGE_SYSTEM_PROMPT`](#clispecforge_system_prompt)
 - [Development Setup](#development-setup)
 - [Spec Workflow](#spec-workflow)
 - [Skill Workflow](#skill-workflow)
@@ -59,7 +61,7 @@ You can use this CLI generator to describe a command-line tool as a plain Markdo
 
 ## Flow
 
-![Spec Agent CLI flow: a Markdown spec from any path, agent skills, and a chosen provider and model become an agent build prompt, which is parsed into FILE: blocks, previewed, then written to disk as a real, pipx-installable generated CLI.](docs/assets/spec-agent-cli-flow.svg)
+![CliSpecForge flow: a Markdown spec from any path, instruction skills, and a chosen provider and model become a clispecforge build request, which is parsed into FILE blocks, previewed, then written to disk.](docs/assets/spec-agent-cli-flow.svg)
 
 ## Quick Start
 
@@ -67,111 +69,127 @@ Install the CLI locally with pip:
 
 ```bash
 python -m pip install .
-agent providers
-agent run "Write a release note for version 0.1.0"
+clispecforge providers
+clispecforge run "Write a release note for version 0.1.0"
 ```
 
 Install it as an isolated command with pipx:
 
 ```bash
 pipx install .
-agent providers
-agent run "Write a release note for version 0.1.0"
+clispecforge providers
+clispecforge run "Write a release note for version 0.1.0"
 ```
 
 Install directly from GitHub with pipx:
 
 ```bash
-pipx install "git+https://github.com/lilabrooks/spec-agent-cli.git"
-agent providers
-my-cli --basic
+pipx install "git+https://github.com/lilabrooks/clispecforge.git"
+clispecforge providers
 ```
 
-The default specs and skills ship inside the package, so `agent spec` and `agent skill` work from any directory after install. For a complete pipx and artifact guide, see [docs/guides/pipx-artifact-guide.md](docs/guides/pipx-artifact-guide.md).
+The default specs and skills ship inside the package, so `clispecforge spec` and `clispecforge skill` work from any directory after install. For a complete pipx and artifact guide, see [docs/guides/pipx-artifact-guide.md](docs/guides/pipx-artifact-guide.md).
 
 ## Configuration
 
-Three environment variables adjust runtime behavior. They are read directly from the process environment, so set them in your shell before running. There is no `.env` auto-loading.
+Four environment variables adjust runtime behavior. They are read directly from the process environment, so set them in your shell before running. There is no `.env` auto-loading.
 
 You can set a variable for a single command by prefixing it, or export it to apply to every command in the shell session:
 
 ```bash
 # One command only
-AGENT_CLI_PROVIDER=echo agent run "Write a release note for version 0.1.0"
+CLISPECFORGE_PROVIDER=echo clispecforge run "Write a release note for version 0.1.0"
 
 # Whole session
-export AGENT_CLI_PROVIDER=echo
-agent run "Write a release note for version 0.1.0"
+export CLISPECFORGE_PROVIDER=echo
+clispecforge run "Write a release note for version 0.1.0"
 ```
 
-### `AGENT_CLI_PROVIDER`
+### `CLISPECFORGE_PROVIDER`
 
-Chooses which provider adapter answers the prompt. Default is `echo`. Run `agent providers` to see the adapters that are installed.
+Chooses which provider adapter answers the prompt. Default is `echo`. Run `clispecforge providers` to see the adapters that are installed.
 
-Precedence is `--provider` flag, then `AGENT_CLI_PROVIDER`, then the `echo` default. So the flag wins when both are set:
+Precedence is `--provider` flag, then `CLISPECFORGE_PROVIDER`, then the `echo` default. So the flag wins when both are set:
 
 ```bash
-export AGENT_CLI_PROVIDER=echo
-agent run --provider echo "hello"     # --provider wins over the env var
+export CLISPECFORGE_PROVIDER=echo
+clispecforge run --provider echo "hello"     # --provider wins over the env var
 ```
 
 An unknown provider fails fast with the list of supported names:
 
 ```bash
-$ agent run --provider gpt "hello"
+$ clispecforge run --provider gpt "hello"
 Error: Unknown provider 'gpt'. Supported providers: anthropic, echo, openai.
-Try 'agent providers' to see available providers.
+Try 'clispecforge providers' to see available providers.
 ```
 
 Bundled adapters: `echo` (no credentials or network access), `anthropic` (Claude API, needs `pip install ".[anthropic]"` and an `ANTHROPIC_API_KEY`), and `openai` (Chat Completions API, needs `pip install ".[openai]"` and an `OPENAI_API_KEY`). Add further vendors under `src/agent_cli/providers/` and register them (see [Provider Design](#provider-design)).
 
-**An API key only matters once you've actually selected that provider.** `ANTHROPIC_API_KEY`/`OPENAI_API_KEY` are read by the `anthropic`/`openai` SDKs themselves, not by this CLI, and only the moment `AGENT_CLI_PROVIDER` (or `--provider`) is set to that provider's name — the default `echo` never looks at either variable, so having one exported with `AGENT_CLI_PROVIDER` still unset (or set to `echo`) is a no-op.
+**An API key only matters once you've actually selected that provider.** `ANTHROPIC_API_KEY`/`OPENAI_API_KEY` are read by the `anthropic`/`openai` SDKs themselves, not by this CLI, and only the moment `CLISPECFORGE_PROVIDER` (or `--provider`) is set to that provider's name — the default `echo` never looks at either variable, so having one exported with `CLISPECFORGE_PROVIDER` still unset (or set to `echo`) is a no-op.
 
 It does **not** need to be set globally. Like the other variables in this section, it only has to be present in the process environment for the command that runs — export it in your shell profile if you always want it available, prefix a single command with it if you don't, or set it in a `.env`-loading tool of your own (this project doesn't auto-load one). There's nothing to configure inside the CLI itself; whatever `ANTHROPIC_API_KEY`/`OPENAI_API_KEY` is visible to the process at run time is what the SDK picks up.
 
-### `AGENT_CLI_MODEL`
+### `CLISPECFORGE_MODEL`
 
 Overrides which model the active provider adapter calls. There is no CLI flag, so the env var or the adapter's built-in default is used:
 
 ```bash
-export AGENT_CLI_PROVIDER=anthropic
-export AGENT_CLI_MODEL=claude-sonnet-5
-agent run "Summarize the changes in version 0.1.0"
+export CLISPECFORGE_PROVIDER=anthropic
+export CLISPECFORGE_MODEL=claude-sonnet-5
+clispecforge run "Summarize the changes in version 0.1.0"
 ```
 
 If unset, each adapter falls back to its own default: `anthropic` → `claude-opus-4-8`, `openai` → `gpt-4o-mini`. The `echo` adapter has no underlying model and ignores this variable entirely.
 
-**`AGENT_CLI_MODEL` alone does nothing.** It only takes effect on whichever provider `AGENT_CLI_PROVIDER`/`--provider` actually selects. Setting `AGENT_CLI_MODEL=claude-sonnet-5` while the provider is still (or defaults to) `echo` is a silent no-op — you'll get the same echoed text either way, with no error to flag the mismatch. Always set both together:
+**`CLISPECFORGE_MODEL` alone does nothing.** It only takes effect on whichever provider `CLISPECFORGE_PROVIDER`/`--provider` actually selects. Setting `CLISPECFORGE_MODEL=claude-sonnet-5` while the provider is still (or defaults to) `echo` is a silent no-op — you'll get the same echoed text either way, with no error to flag the mismatch. Always set both together:
 
 ```bash
 # Wrong: model is set, but the provider is still the echo default — no effect
-export AGENT_CLI_MODEL=claude-sonnet-5
-agent run "hello"   # still runs through echo
+export CLISPECFORGE_MODEL=claude-sonnet-5
+clispecforge run "hello"   # still runs through echo
 
 # Right: provider and model set together
-export AGENT_CLI_PROVIDER=anthropic
-export AGENT_CLI_MODEL=claude-sonnet-5
-agent run "hello"   # now actually calls claude-sonnet-5
+export CLISPECFORGE_PROVIDER=anthropic
+export CLISPECFORGE_MODEL=claude-sonnet-5
+clispecforge run "hello"   # now actually calls claude-sonnet-5
 ```
 
 #### How to choose a model
 
-1. **Pick a provider first.** Model selection only matters once `AGENT_CLI_PROVIDER` is set to `anthropic` or `openai` — pick whichever vendor you have API access to.
-2. **Start with the adapter's default and see if it's good enough.** Leaving `AGENT_CLI_MODEL` unset gets you a reasonable starting point (`claude-opus-4-8` for `anthropic`, `gpt-4o-mini` for `openai`) without any extra configuration.
+1. **Pick a provider first.** Model selection only matters once `CLISPECFORGE_PROVIDER` is set to `anthropic` or `openai` — pick whichever vendor you have API access to.
+2. **Start with the adapter's default and see if it's good enough.** Leaving `CLISPECFORGE_MODEL` unset gets you a reasonable starting point (`claude-opus-4-8` for `anthropic`, `gpt-4o-mini` for `openai`) without any extra configuration.
 3. **Decide what you're optimizing for** if you want to change it:
    - **Highest quality, cost no object** — `anthropic`: `claude-opus-4-8`. `openai`: `gpt-4o`.
    - **Balanced quality, cost, and speed for everyday tasks** — `anthropic`: `claude-sonnet-5`. `openai`: `gpt-4o-mini`.
    - **Fastest and cheapest, for simple or high-volume tasks** — `anthropic`: `claude-haiku-4-5`. `openai`: `gpt-4o-mini`.
-4. **Set `AGENT_CLI_MODEL` to that model's exact ID.** Model IDs are vendor-specific strings (e.g. `claude-sonnet-5`, `gpt-4o`) — check your provider's model documentation for the current list, since vendors add and retire models over time.
-5. **Verify it took effect** by running a prompt (`agent run --provider anthropic "hello"`). An invalid or retired model ID surfaces as an error from the vendor's SDK, which confirms the override is being read.
+4. **Set `CLISPECFORGE_MODEL` to that model's exact ID.** Model IDs are vendor-specific strings (e.g. `claude-sonnet-5`, `gpt-4o`) — check your provider's model documentation for the current list, since vendors add and retire models over time.
+5. **Verify it took effect** by running a prompt (`clispecforge run --provider anthropic "hello"`). An invalid or retired model ID surfaces as an error from the vendor's SDK, which confirms the override is being read.
 
-### `AGENT_CLI_SYSTEM_PROMPT`
+### `CLISPECFORGE_MAX_TOKENS`
+
+Sets the maximum number of output tokens requested from Anthropic or OpenAI.
+The default is `4096`; the value must be a positive integer. The echo provider
+ignores it.
+
+```bash
+export CLISPECFORGE_PROVIDER=openai
+export CLISPECFORGE_MAX_TOKENS=8192
+clispecforge build "Create a small Python CLI"
+```
+
+If a provider reports that it stopped at this limit, the command exits with an
+error instead of parsing or writing the partial response. Increase the value
+and issue the command again if the provider and selected model support it. The
+CLI does not retry automatically.
+
+### `CLISPECFORGE_SYSTEM_PROMPT`
 
 Sets the system prompt sent to the agent ahead of your task. Default is `You are a concise, practical assistant.`. There is no CLI flag for it, so the env var or the default is used.
 
 ```bash
-export AGENT_CLI_SYSTEM_PROMPT="You are a terse release-notes writer. Use past tense."
-agent run "Summarize the changes in version 0.1.0"
+export CLISPECFORGE_SYSTEM_PROMPT="You are a terse release-notes writer. Use past tense."
+clispecforge run "Summarize the changes in version 0.1.0"
 ```
 
 Heads-up: the bundled `echo` adapter replies with your task text verbatim and ignores the system prompt, so this variable has no visible effect until you wire up a real model adapter that passes the prompt to the model.
@@ -208,12 +226,12 @@ To run the full check across every supported Python version the way CI does, use
 Run the CLI locally:
 
 ```bash
-agent providers
-agent spec check
-agent skill check
+clispecforge providers
+clispecforge spec check
+clispecforge skill check
 ```
 
-Heads-up: `pip install -e ".[dev]"` is an **editable** install, so `agent` runs straight from `src/` and never triggers a wheel build. That means the bundled copy of `specs/` and `skills/` under `agent_cli/_bundled/` (see [`resources.py`](src/agent_cli/resources.py)) does not exist yet — `default_spec_root()`/`default_skill_root()` fall back to the checkout's own `specs/cli/` and `skills/agent/`, so spec/skill slugs and `agent build`'s automatic `file-output-contract` attachment only resolve while your current directory is inside this checkout. Run a real (non-editable) install — `pip install .` or `pipx install .` — to get the bundled copy and use `agent` from any directory instead. `--spec`/`--skill` pointed at an explicit file path work either way, since that path is checked before any root lookup.
+Heads-up: `pip install -e ".[dev]"` is an **editable** install, so `clispecforge` runs straight from `src/` and never triggers a wheel build. That means the bundled copy of `specs/` and `skills/` under `agent_cli/_bundled/` (see [`resources.py`](src/agent_cli/resources.py)) does not exist yet — `default_spec_root()`/`default_skill_root()` fall back to the checkout's own `specs/cli/` and `skills/agent/`, so spec/skill slugs and `clispecforge build`'s automatic `file-output-contract` attachment only resolve while your current directory is inside this checkout. Run a real (non-editable) install — `pip install .` or `pipx install .` — to get the bundled copy and use `clispecforge` from any directory instead. `--spec`/`--skill` pointed at an explicit file path work either way, since that path is checked before any root lookup.
 
 ### Dependency scanning
 
@@ -275,21 +293,21 @@ The installed package ships with default specs. A `specs/cli` folder in your cur
 Validate specs:
 
 ```bash
-agent spec check
-agent spec check my-cli-details
+clispecforge spec check
+clispecforge spec check my-cli-details
 ```
 
-Attach a spec to an agent run:
+Attach a spec to a run:
 
 ```bash
-agent run --spec my-cli-details "Implement this CLI feature"
+clispecforge run --spec my-cli-details "Implement this CLI feature"
 ```
 
 `--spec` is not limited to slugs under `specs/cli/` — it accepts any file path, absolute or relative, so you can point it at a spec you keep anywhere on disk (a scratch file, another project, a path outside this repo entirely):
 
 ```bash
-agent run --spec /path/to/any/weather-cli.md "Implement this CLI feature"
-agent build --spec ./drafts/weather-cli.md --apply "Implement this CLI feature"
+clispecforge run --spec /path/to/any/weather-cli.md "Implement this CLI feature"
+clispecforge build --spec ./drafts/weather-cli.md --apply "Implement this CLI feature"
 ```
 
 Resolution tries, in order: the exact path given, that path under the spec root, that path with `.md` appended under the spec root, then a slug match under the spec root. An arbitrary path that exists is used as-is and skips the rest of that lookup.
@@ -310,69 +328,74 @@ Python and CLI quality skills:
 - `stdlib-cli-ux`
 - `cli-test-coverage`
 - `python-packaging-cli`
-- `file-output-contract` (used automatically by `agent build`; see [Building Files from a Spec](#building-files-from-a-spec))
+- `file-output-contract` (used automatically by `clispecforge build`; see [Building Files from a Spec](#building-files-from-a-spec))
 
 As with specs, default skills ship inside the package, and a `skills/agent` folder in your current directory takes precedence.
 
 Skills are opt-in by default. Attach selected skills with a spec:
 
 ```bash
-agent run --spec my-cli-details --skill goal-driven-execution --skill stdlib-cli-ux "Implement this feature"
+clispecforge run --spec my-cli-details --skill goal-driven-execution --skill stdlib-cli-ux "Implement this feature"
 ```
 
 Attach every available skill:
 
 ```bash
-agent run --spec my-cli-details --all-skills "Implement this feature"
+clispecforge run --spec my-cli-details --all-skills "Implement this feature"
 ```
 
 ## Building Files from a Spec
 
-`agent run` only prints the model's text reply — nothing lands on disk. `agent build` closes that gap: it runs the same spec/skill-aware prompt as `run`, but always attaches an extra `file-output-contract` skill that tells the model to reply with `FILE: <path>` markers followed by a fenced code block per file. `agent build` parses that reply and can write the files it finds.
+`clispecforge run` only prints the model's text reply — nothing lands on disk. `clispecforge build` closes that gap: it runs the same spec/skill-aware prompt as `run`, but always attaches an extra `file-output-contract` skill that tells the model to reply with `FILE: <path>` markers followed by a fenced code block per file. `clispecforge build` parses that reply and can write the files it finds.
 
 Without `--apply`, it only prints the plan (which files, and where) so you can review before anything is written:
 
 ```bash
-agent build --spec my-cli-details "Implement this CLI feature"
+clispecforge build --spec my-cli-details "Implement this CLI feature"
 ```
 
 Add `--apply` to actually write the files, under `--out-dir` (defaults to the current directory):
 
 ```bash
-agent build --spec my-cli-details --apply --out-dir . "Implement this CLI feature"
+clispecforge build --spec my-cli-details --apply --out-dir . "Implement this CLI feature"
 ```
 
-To keep the write step safe by default, `agent build --apply` refuses to overwrite any file that already exists unless you also pass `--force`:
+To keep the write step safe by default, `clispecforge build --apply` refuses to overwrite any file that already exists unless you also pass `--force`:
 
 ```bash
-$ agent build --apply "Implement this CLI feature"
+$ clispecforge build --apply "Implement this CLI feature"
 Error: Refusing to overwrite existing file(s) without --force: src/agent_cli/commands/my_cli.py
 ```
 
-If the model's reply has no `FILE:` blocks (for example, it just answered a question instead of writing code), `agent build` prints the raw reply and warns on stderr that there was nothing to write — it never fails in that case.
+Generated paths are rejected when they are absolute, contain parent traversal,
+or resolve outside `--out-dir` through a symbolic link. Duplicate targets are
+also rejected before any file is written. A `FILE:` block without a closing
+fence is treated as incomplete and ignored.
 
-`agent build` accepts the same `--provider`, `--spec`, `--skill`, and `--all-skills` flags as `agent run`.
+If the model's reply has no `FILE:` blocks (for example, it just answered a question instead of writing code), `clispecforge build` prints the raw reply and warns on stderr that there was nothing to write — it never fails in that case.
+
+`clispecforge build` accepts the same `--provider`, `--spec`, `--skill`, and `--all-skills` flags as `clispecforge run`.
 
 ### Validating the spec before the model call
 
-Since `--spec` accepts any file, including one you just wrote by hand, `agent build` checks it against the same required sections as `agent spec check` before spending a model call on it. By default a spec with errors (missing title, missing a required section) only prints a warning to stderr and the build continues — a spec doesn't have to be perfect to be useful context:
+Since `--spec` accepts any file, including one you just wrote by hand, `clispecforge build` checks it against the same required sections as `clispecforge spec check` before spending a model call on it. By default a spec with errors (missing title, missing a required section) only prints a warning to stderr and the build continues — a spec doesn't have to be perfect to be useful context:
 
 ```bash
-$ agent build --spec ./drafts/weather-cli.md "Implement this CLI feature"
+$ clispecforge build --spec ./drafts/weather-cli.md "Implement this CLI feature"
 Warning: spec drafts/weather-cli.md has validation errors:
 drafts/weather-cli.md: failed
   Error: missing required section: Acceptance tests
-Continuing without --strict. Run 'agent spec check' for the full report.
+Continuing without --strict. Run 'clispecforge spec check' for the full report.
 ```
 
 Pass `--strict` to fail fast instead, before any model call is made:
 
 ```bash
-$ agent build --spec ./drafts/weather-cli.md --strict "Implement this CLI feature"
+$ clispecforge build --spec ./drafts/weather-cli.md --strict "Implement this CLI feature"
 Error: Spec drafts/weather-cli.md failed validation:
 drafts/weather-cli.md: failed
   Error: missing required section: Acceptance tests
-Try 'agent spec check drafts/weather-cli.md' to see the full report.
+Try 'clispecforge spec check drafts/weather-cli.md' to see the full report.
 ```
 
 ## Step-by-Step: Generate a CLI from Any Spec File and Model
@@ -415,7 +438,7 @@ If you're working from an editable dev install (`pip install -e ".[dev]"`), run 
 2. **Validate the spec before spending a model call on it** (optional, but recommended for a hand-written spec):
 
    ```bash
-   agent spec check ~/drafts/weather-cli.md
+   clispecforge spec check ~/drafts/weather-cli.md
    ```
 
 3. **Install a real provider's SDK and set its credentials.** The bundled `echo` provider only echoes text back, so an actual generation step needs `anthropic` or `openai`:
@@ -428,14 +451,14 @@ If you're working from an editable dev install (`pip install -e ".[dev]"`), run 
 4. **Choose the provider and model** with the env vars from [Configuration](#configuration):
 
    ```bash
-   export AGENT_CLI_PROVIDER=anthropic
-   export AGENT_CLI_MODEL=claude-sonnet-5
+   export CLISPECFORGE_PROVIDER=anthropic
+   export CLISPECFORGE_MODEL=claude-sonnet-5
    ```
 
 5. **Preview the plan first**, without writing anything, by pointing `--spec` at the file from step 1:
 
    ```bash
-   agent build --spec ~/drafts/weather-cli.md "Implement the weather-cli command described in this spec"
+   clispecforge build --spec ~/drafts/weather-cli.md "Implement the weather-cli command described in this spec"
    ```
 
    ```text
@@ -445,12 +468,12 @@ If you're working from an editable dev install (`pip install -e ".[dev]"`), run 
    Re-run with --apply to write these files.
    ```
 
-   That exact file list is illustrative, not guaranteed. `agent build` doesn't scaffold any structure of its own — it writes whatever `FILE: <path>` blocks the model's reply contains, wherever the model puts them. A different model, a different task sentence, or different attached skills can just as easily produce one bare script or a full installable package. See [Steering the output shape](#steering-the-output-shape) below to make the shape you want explicit instead of leaving it to the model to guess.
+   That exact file list is illustrative, not guaranteed. `clispecforge build` doesn't scaffold any structure of its own — it writes whatever `FILE: <path>` blocks the model's reply contains, wherever the model puts them. A different model, a different task sentence, or different attached skills can just as easily produce one bare script or a full installable package. See [Steering the output shape](#steering-the-output-shape) below to make the shape you want explicit instead of leaving it to the model to guess.
 
 6. **Apply it**, directing the output into a project folder with `--out-dir`:
 
    ```bash
-   agent build --spec ~/drafts/weather-cli.md --apply --out-dir ./weather-cli-project \
+   clispecforge build --spec ~/drafts/weather-cli.md --apply --out-dir ./weather-cli-project \
      "Implement the weather-cli command described in this spec"
    ```
 
@@ -461,11 +484,11 @@ If you're working from an editable dev install (`pip install -e ".[dev]"`), run 
 
 7. **Use the generated CLI** the same way you would any other Python script or package it produced.
 
-Re-running step 6 refuses to overwrite those same files unless you add `--force` — see [Building Files from a Spec](#building-files-from-a-spec) for that safeguard, [Spec Workflow](#spec-workflow) for more on the `--spec` path resolution, and [`AGENT_CLI_MODEL`](#agent_cli_model) for how to pick a model per provider.
+Re-running step 6 refuses to overwrite those same files unless you add `--force` — see [Building Files from a Spec](#building-files-from-a-spec) for that safeguard, [Spec Workflow](#spec-workflow) for more on the `--spec` path resolution, and [`CLISPECFORGE_MODEL`](#clispecforge_model) for how to pick a model per provider.
 
 ### Steering the output shape
 
-`agent build` has no opinion on project shape — a script, a package, one file, ten files, all come from the same `FILE:` contract. The two levers that actually decide the shape are the spec's `Outputs` section (state what you want, don't leave it implicit) and which skills are attached (`python-packaging-cli` in particular nudges the model toward packaging conventions instead of a bare script).
+`clispecforge build` has no opinion on project shape — a script, a package, one file, ten files, all come from the same `FILE:` contract. The two levers that actually decide the shape are the spec's `Outputs` section (state what you want, don't leave it implicit) and which skills are attached (`python-packaging-cli` in particular nudges the model toward packaging conventions instead of a bare script).
 
 **Loose script (what step 5 assumed):** leaving `Outputs` vague and attaching no skills tends to produce the smallest thing that satisfies `Acceptance tests` — often one script plus one test file, as shown above.
 
@@ -501,7 +524,7 @@ Always print `<city>: Sunny, 72F` for any city.
 - Given `--city Boston`, stdout is `Boston: Sunny, 72F`.
 EOF
 
-agent build --spec ~/drafts/weather-cli.md --skill python-packaging-cli --skill stdlib-cli-ux \
+clispecforge build --spec ~/drafts/weather-cli.md --skill python-packaging-cli --skill stdlib-cli-ux \
   --apply --out-dir ./weather-cli-project \
   "Implement the weather-cli command described in this spec as an installable Python package"
 ```
@@ -516,11 +539,11 @@ Same command, same tool — the difference is entirely in what the spec asked fo
 
 ## Generated CLI Fixture
 
-The repo includes a small generated CLI fixture named `my-cli`. It prints non-sensitive host machine details and exists as a test case for the generator structure.
+The repo includes a small generated CLI fixture named `my-cli`. It prints non-sensitive host machine details and exists as a test case for the generator structure. It is kept out of the installed command surface and runs directly from the checkout:
 
 ```bash
-my-cli --basic
-my-cli --detailed
+python -m agent_cli.commands.my_cli --basic
+python -m agent_cli.commands.my_cli --detailed
 ```
 
 The fixture spec is [specs/cli/my-cli-details.md](specs/cli/my-cli-details.md). The step-by-step test guide is [docs/guides/my-cli-generator-test.md](docs/guides/my-cli-generator-test.md).
@@ -530,7 +553,7 @@ The fixture spec is [specs/cli/my-cli-details.md](specs/cli/my-cli-details.md). 
 ```text
 .
 ├── src/agent_cli/
-│   ├── cli.py              # Main `agent` command surface
+│   ├── cli.py              # Main `clispecforge` command surface
 │   ├── agents/             # Agent behavior and orchestration
 │   ├── commands/           # Generated or fixture CLI command modules
 │   ├── config/             # Settings and environment loading
@@ -546,7 +569,7 @@ The fixture spec is [specs/cli/my-cli-details.md](specs/cli/my-cli-details.md). 
 │   ├── cli/                # CLI specs the agent can work from
 │   └── templates/          # Reusable spec templates
 ├── tests/                  # Fast unit tests
-├── docs/                   # ADRs, component specs, guides, contributing
+├── docs/                   # Design notes, decisions, guides, and research
 ├── requirements.txt        # Snyk-friendly scan manifest; mirrors optional/dev deps
 └── pyproject.toml          # Packaging, tools, and CLI entry points
 ```
@@ -567,23 +590,22 @@ To add a real vendor, implement `LanguageModel` under `src/agent_cli/providers/`
 
 ## Naming and Artifacts
 
-This repository has two important names:
+The distribution and installed command share one public name:
 
-- Distribution package: `ai-agent-cli`
-- Installed commands: `agent` and `my-cli`
+- Distribution package: `clispecforge`
+- Installed command: `clispecforge`
 
 Build artifacts use the distribution package name normalized for Python packaging. That is why `python -m build` creates files like:
 
 ```text
-ai_agent_cli-0.3.0.tar.gz
-ai_agent_cli-0.3.0-py3-none-any.whl
+clispecforge-0.4.0.tar.gz
+clispecforge-0.4.0-py3-none-any.whl
 ```
 
-That is expected. The installed commands remain:
+The installed command is:
 
 ```bash
-agent providers
-my-cli --basic
+clispecforge providers
 ```
 
 ## Quality Standard
@@ -601,11 +623,9 @@ When Snyk reports a new issue, reproduce it locally with `make snyk-open-source`
 ## Additional Docs
 
 - [CHANGELOG.md](CHANGELOG.md)
-- [docs/index.md](docs/index.md) (documentation index)
-- [docs/log.md](docs/log.md) (documentation changelog)
-- [docs/contributing.md](docs/contributing.md)
-- [docs/adr/](docs/adr/index.md) (architecture decision records)
-- [docs/specs/](docs/specs/index.md) (component specifications)
+- [CONTRIBUTING.md](CONTRIBUTING.md)
+- [docs/design.md](docs/design.md)
+- [docs/decisions.md](docs/decisions.md)
 - [docs/guides/pipx-artifact-guide.md](docs/guides/pipx-artifact-guide.md)
 - [docs/guides/my-cli-generator-test.md](docs/guides/my-cli-generator-test.md)
 - [skills/README.md](skills/README.md)

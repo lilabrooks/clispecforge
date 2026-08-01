@@ -65,6 +65,18 @@ def test_parse_generated_files_skips_marker_without_following_fence() -> None:
     assert parse_generated_files(text) == []
 
 
+def test_parse_generated_files_skips_unclosed_fence() -> None:
+    text = "\n".join(
+        [
+            "FILE: incomplete.py",
+            "```python",
+            'print("unfinished")',
+        ]
+    )
+
+    assert parse_generated_files(text) == []
+
+
 def test_resolve_target_path_rejects_absolute_path(tmp_path: Path) -> None:
     generated = GeneratedFile(path="/etc/passwd", content="x")
 
@@ -77,6 +89,18 @@ def test_resolve_target_path_rejects_parent_traversal(tmp_path: Path) -> None:
 
     with pytest.raises(ValueError, match="Unsafe or invalid file path"):
         resolve_target_path(tmp_path, generated)
+
+
+def test_resolve_target_path_rejects_symlink_escape(tmp_path: Path) -> None:
+    out_dir = tmp_path / "out"
+    outside = tmp_path / "outside"
+    out_dir.mkdir()
+    outside.mkdir()
+    (out_dir / "link").symlink_to(outside, target_is_directory=True)
+    generated = GeneratedFile(path="link/escaped.txt", content="x")
+
+    with pytest.raises(ValueError, match="Unsafe or invalid file path"):
+        resolve_target_path(out_dir, generated)
 
 
 def test_resolve_target_path_joins_relative_path_under_out_dir(tmp_path: Path) -> None:
@@ -106,6 +130,19 @@ def test_write_generated_files_refuses_to_overwrite_without_force(tmp_path: Path
         write_generated_files(files, targets, force=False)
 
     assert existing.read_text(encoding="utf-8") == "original"
+
+
+def test_write_generated_files_rejects_duplicate_targets_before_writing(tmp_path: Path) -> None:
+    files = [
+        GeneratedFile(path="same.txt", content="first"),
+        GeneratedFile(path="same.txt", content="second"),
+    ]
+    targets = [resolve_target_path(tmp_path, generated) for generated in files]
+
+    with pytest.raises(ValueError, match="Duplicate generated file target"):
+        write_generated_files(files, targets, force=False)
+
+    assert not (tmp_path / "same.txt").exists()
 
 
 def test_write_generated_files_overwrites_with_force(tmp_path: Path) -> None:

@@ -2,6 +2,28 @@
 
 All notable changes to this project are documented here. The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+## [0.4.0] - 2026-08-01
+
+### Changed
+
+- Reframed the repository as an independent, single-pass Python CLI scaffold generator.
+- Replaced the kit-managed documentation and agent configuration with concise project-owned guidance.
+- Renamed the distribution and executable to `clispecforge`, removed the fixture entry point, and aligned the public environment-variable prefix.
+- Raised the provider output-token default to 4,096 and added `CLISPECFORGE_MAX_TOKENS` for explicit configuration.
+
+### Removed
+
+- Removed OKF maps, hooks, helpers, mirrored workflow skills, and their parity checks.
+
+### Fixed
+
+- Fail clearly when Anthropic or OpenAI reports a response truncated at the configured output-token limit.
+- Reject generated paths that escape the output directory through symbolic links.
+- Reject duplicate generated targets before writing any file.
+- Ignore incomplete `FILE:` blocks with no closing fence.
+
 ## [0.3.0] - 2026-07-02
 
 ### Added

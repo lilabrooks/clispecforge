@@ -3,9 +3,9 @@ requires = ["hatchling>=1.25"]
 build-backend = "hatchling.build"
 
 [project]
-name = "ai-agent-cli"
-version = "0.3.0"
-description = "Vendor-neutral Python 3.12+ CLI scaffold for AI agent workflows."
+name = "clispecforge"
+version = "0.4.0"
+description = "Generate reviewable Python CLI scaffolds from Markdown specifications."
 readme = "README.md"
 requires-python = ">=3.12"
 license = "MIT"
@@ -32,9 +32,7 @@ openai = [
 ]
 
 [project.scripts]
-agent = "agent_cli.cli:main"
-# my-cli fixture: comment out or remove this generated CLI app for an actual project.
-my-cli = "agent_cli.commands.my_cli:main"
+clispecforge = "agent_cli.cli:main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/agent_cli"]
@@ -47,7 +45,17 @@ packages = ["src/agent_cli"]
 "skills" = "agent_cli/_bundled/skills"
 
 [tool.hatch.build.targets.sdist]
-include = ["src", "tests", "specs", "skills", "docs", "README.md", "LICENSE"]
+include = [
+    "src",
+    "tests",
+    "specs",
+    "skills",
+    "docs",
+    "README.md",
+    "CONTRIBUTING.md",
+    "CHANGELOG.md",
+    "LICENSE",
+]
 
 [tool.pytest.ini_options]
 addopts = "-q --strict-config --strict-markers"

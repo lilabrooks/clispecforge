@@ -29,6 +29,13 @@ def test_create_provider_passes_model_override_through() -> None:
     assert model._model == "claude-sonnet-5"
 
 
+def test_create_provider_passes_max_tokens_through() -> None:
+    model = create_provider("anthropic", max_tokens=8192)
+
+    assert isinstance(model, AnthropicLanguageModel)
+    assert model._max_tokens == 8192
+
+
 def test_create_provider_falls_back_to_adapter_default_model() -> None:
     model = create_provider("anthropic")
 
