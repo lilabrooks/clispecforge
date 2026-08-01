@@ -78,6 +78,7 @@ def run(
 
 def build(  # noqa: PLR0913 (one flag per --spec/--skill/--all-skills/--strict CLI option)
     prompt: str,
+    *,
     provider: str | None = None,
     spec: str | None = None,
     skills: list[str] | None = None,
