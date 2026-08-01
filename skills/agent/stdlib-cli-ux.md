@@ -33,6 +33,6 @@ Use this for commands, subcommands, flags, arguments, help text, parser errors, 
 - Test a valid invocation through `main([...])`.
 - Test stdout, stderr, and exit code for success.
 - Test stdout, stderr, and exit code for at least one failure case.
-- Confirm `--help` works at the command and subcommand level.
-- Confirm generated help includes required arguments, optional flags, and examples.
-
+- Include tests for `--help` at the command and subcommand level.
+- Include assertions for required arguments, optional flags, and examples.
+- Do not claim the help output was run; CliSpecForge does not execute it.

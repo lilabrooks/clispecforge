@@ -1,11 +1,10 @@
 # Local quality checks. Mirrors the GitHub Actions workflows.
 #
-#   make check       Run lint, type-check, and tests on the active interpreter
-#                    (whatever your .venv has). This is the everyday command.
-#   make check-all   Run the same checks across every supported Python version.
-#                    Uses uv to fetch interpreters on demand; CI already does
-#                    this on push, so reach for it mainly to reproduce a
-#                    version-specific failure locally.
+#   make check       Run lint, type-check, tests, and coverage on the active
+#                    interpreter. This is the everyday command.
+#   make check-all   Run the everyday gate across every supported Python
+#                    version. Uses isolated uv environments, so it does not
+#                    replace .venv or create a project lockfile.
 #
 # Individual targets (lint, typecheck, test, coverage) are available too.
 
@@ -27,7 +26,7 @@ SNYK_PYTHON_ARG := --command=$(SNYK_PYTHON)
 
 .PHONY: check lint format typecheck test coverage snyk snyk-open-source snyk-code check-all
 
-check: lint typecheck test
+check: lint typecheck coverage
 
 lint:
 	$(RUFF) check .
@@ -79,9 +78,7 @@ check-all:
 	}
 	@for v in $(VERSIONS); do \
 		echo "=== Python $$v ==="; \
-		uv run --python $$v --extra dev -- ruff check . && \
-		uv run --python $$v --extra dev -- ruff format --check . && \
-		uv run --python $$v --extra dev -- mypy && \
-		uv run --python $$v --extra dev -- pytest || exit 1; \
+		uv run --isolated --no-project --python $$v --with-editable ".[dev]" -- \
+			$(MAKE) check PYTHON=python RUFF=ruff MYPY=mypy PYTEST=pytest || exit 1; \
 	done
 	@echo "All versions passed."

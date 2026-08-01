@@ -64,6 +64,7 @@ def test_complete_splits_system_prompt_from_messages(monkeypatch: pytest.MonkeyP
         messages=(
             Message(role="system", content="You are terse."),
             Message(role="user", content="hello"),
+            Message(role="assistant", content="prior reply"),
         )
     )
 
@@ -71,7 +72,10 @@ def test_complete_splits_system_prompt_from_messages(monkeypatch: pytest.MonkeyP
 
     call = client.messages.calls[0]
     assert call["system"] == "You are terse."
-    assert call["messages"] == [{"role": "user", "content": "hello"}]
+    assert call["messages"] == [
+        {"role": "user", "content": "hello"},
+        {"role": "assistant", "content": "prior reply"},
+    ]
     assert call["max_tokens"] == 8192
     assert response.text == "hello from claude"
     assert response.usage == {"input_tokens": 10, "output_tokens": 5}

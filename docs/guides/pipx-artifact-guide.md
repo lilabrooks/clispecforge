@@ -32,7 +32,7 @@ Install from a specific branch:
 pipx install "git+https://github.com/lilabrooks/clispecforge.git@main"
 ```
 
-Install from a tag after you create one:
+Install the tagged release:
 
 ```bash
 pipx install "git+https://github.com/lilabrooks/clispecforge.git@v0.4.0"
@@ -56,16 +56,15 @@ pipx uninstall clispecforge
 # Skip the clone step if you already have a local checkout.
 git clone https://github.com/lilabrooks/clispecforge.git
 cd clispecforge
+python3 -m venv .venv
 source .venv/bin/activate
+python -m pip install -e ".[dev]"
 ```
 
 ## 3. Run quality checks
 
 ```bash
-pytest
-ruff check .
-ruff format --check .
-mypy
+make check
 ```
 
 Fix any failures before building.
@@ -115,7 +114,7 @@ pipx install -e .
 
 ```bash
 clispecforge providers
-clispecforge spec check my-cli-details
+clispecforge spec check example
 ```
 
 ## 8. Move the artifact

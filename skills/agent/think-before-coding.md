@@ -19,7 +19,6 @@ Use this when a spec is incomplete, ambiguous, internally inconsistent, or has m
 - Keep uncertainty visible in the agent response.
 
 ## Verification
-- The final implementation traces back to explicit spec text or named assumptions.
+- The proposed files trace back to explicit spec text or named assumptions.
 - Ambiguous requirements are clarified before code changes.
-- The agent response names unresolved risks instead of pretending they are solved.
-
+- The response names unresolved risks instead of pretending they are solved.

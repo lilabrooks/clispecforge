@@ -11,10 +11,10 @@ assembly and file handling independent from vendor SDK types.
 ## One public name
 
 The distribution and installed executable are both named `clispecforge`. The
-generated fixture remains importable from the checkout without adding another
-console script. The internal `agent_cli` import package remains unchanged; it
-is an implementation detail and renaming it would not improve the command-line
-workflow.
+standalone example has its own package metadata and console script without
+adding another command to the CliSpecForge wheel. The internal `agent_cli`
+import package remains unchanged; it is an implementation detail and renaming
+it would not improve the command-line workflow.
 
 ## No required runtime dependencies
 
@@ -29,12 +29,14 @@ fenced code blocks. The format is easy to inspect and works across providers.
 A block is accepted only after its closing fence is found. Model output remains
 untrusted and must pass parser and path checks before any write.
 
-## Safe writes by default
+## Guarded writes by default
 
-`clispecforge build` previews a plan unless `--apply` is supplied. Existing targets
-require `--force`. Resolved targets must remain beneath the selected output
-directory, including through symbolic links. Duplicate resolved targets fail
-the batch before any file is written.
+`clispecforge build` previews a plan unless `--apply` is supplied. Targets that
+exist during preflight require `--force`. Targets are resolved and checked
+against the selected output directory, including through symbolic links.
+Duplicate resolved targets fail the batch before any file is written. These
+checks reduce accidental writes and common path escapes; they are not a
+filesystem sandbox against concurrent path changes.
 
 ## Single-pass generation
 

@@ -6,7 +6,8 @@ deciders: [Lila Brooks]
 # Python packaging for CLIs
 
 ## Purpose
-Keep generated CLIs installable, runnable, and clear about dependencies.
+Ask for conventional Python CLI packaging with explicit dependencies and an
+installed command entry point.
 
 ## When to use
 Use this when changing `pyproject.toml`, command entry points, dependencies, package layout, versioning, or install instructions.
@@ -23,6 +24,7 @@ Use this when changing `pyproject.toml`, command entry points, dependencies, pac
 ## Verification
 - Confirm `pyproject.toml` parses.
 - Confirm the script entry point targets a callable that returns an exit code.
-- Run the CLI through `python -m agent_cli.cli ...` before assuming installation works.
-- Run tests after packaging changes.
-
+- Include the build, installation, and command smoke-test steps the developer
+  should run after applying the files.
+- Do not describe the scaffold as installable or runnable until those steps
+  have actually passed outside CliSpecForge.
