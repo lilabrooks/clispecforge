@@ -43,6 +43,26 @@ Duplicate resolved targets fail the batch before any file is written. These
 checks reduce accidental writes and common path escapes; they are not a
 filesystem sandbox against concurrent path changes.
 
+## Generation is separable from the file handoff
+
+`plan` and `apply` consume a response that already exists, so an agent host can
+supply the generation while CliSpecForge still owns parsing, path validation,
+preview, and guarded writes. They reuse `build`'s functions rather than
+reimplementing them, which is what keeps the two entry points honest: a
+response that `plan` rejects is a response `build` would also reject.
+
+`plan` reports the SHA-256 of the decoded response text, and `apply
+--expect-sha256` refuses anything else. That turns "the approved response is
+the applied response" into a check instead of an assumption, which matters when
+a host writes the response to a temporary file that something else could touch
+between approval and write. The digest covers the response, not the files it
+produces, and it is an integrity check against drift and mistakes rather than
+an authenticity guarantee.
+
+`plan` also rejects duplicate resolved targets, which `build`'s preview leaves
+to write time. Approval is the point of `plan`, so it should not present a plan
+that `apply` would refuse.
+
 ## Single-pass generation
 
 Each command makes at most one model request. Execution, testing, repair loops,

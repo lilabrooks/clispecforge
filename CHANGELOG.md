@@ -4,6 +4,25 @@ All notable changes to this project are documented here. The format is based on 
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-08-01
+
+### Added
+
+- `clispecforge plan RESPONSE` previews an existing provider-style response.
+  It parses `FILE:` blocks, validates every target, rejects unsafe paths and
+  duplicate targets, prints terminal-safe contents, reports the response
+  SHA-256, and writes nothing.
+- `clispecforge apply RESPONSE` writes the files in an existing response under
+  `--out-dir`, with `--force` required for existing targets and an optional
+  `--expect-sha256` that ties the write to the exact response that was
+  previewed.
+- Both commands accept `-` to read the response from standard input, and
+  neither contacts OpenAI, Anthropic, or the echo provider. Agent hosts can
+  supply the generation while CliSpecForge keeps parsing, validation, and
+  writes.
+- `clispecforge --version` reports the installed version from
+  `agent_cli.__version__`.
+
 ## [0.6.0] - 2026-08-01
 
 ### Added

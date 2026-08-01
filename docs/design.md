@@ -6,6 +6,8 @@ tools.
 
 ## Flow
 
+`clispecforge build` runs the full path, from prompt assembly to writes:
+
 1. Resolve and validate an optional specification.
 2. Load any selected instruction skills.
 3. Add the file-output contract for `clispecforge build`.
@@ -18,6 +20,19 @@ tools.
 
 The default echo provider exercises prompt assembly without credentials or a
 network call. Anthropic and OpenAI support is installed through optional extras.
+
+## Offline ingestion
+
+`clispecforge plan` and `clispecforge apply` enter the same flow at step 6 with
+a response that already exists. They read it from a file or standard input,
+contact no provider, and reuse the parsing, target resolution, preview, and
+write functions that `build` uses. `plan` previews and reports the response
+SHA-256; `apply` writes, and `--expect-sha256` refuses a response that differs
+from the one previewed.
+
+This lets an agent host own the generation while CliSpecForge keeps the parts
+that must stay checked: parsing, path validation, preview, and guarded writes.
+The host supplies text; it does not gain a way to bypass a check.
 
 ## Boundaries
 
@@ -38,9 +53,10 @@ wheel.
 
 ## Scope
 
-The tool validates inputs, assembles context, requests one response, previews
-the returned files, and applies approved writes. Developers remain responsible
-for reviewing, running, and testing the generated scaffold.
+The tool validates inputs, assembles context, requests one response or accepts
+an existing one, previews the returned files, and applies approved writes.
+Developers remain responsible for reviewing, running, and testing the generated
+scaffold.
 
 Conversation state, autonomous retries, tool execution, repository management,
 Git operations, hosted execution, and IDE integration stay outside the product.

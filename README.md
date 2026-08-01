@@ -7,17 +7,50 @@
 CliSpecForge turns a Markdown specification for a small Python CLI into a
 reviewable file set. It sends one request to Anthropic or OpenAI, prints the
 complete file contents with terminal control characters escaped, and writes
-them only when you pass `--apply`.
+them only when you pass `--apply`. It can also take a response you already
+have, so an agent host supplies the generation while the parsing, path checks,
+preview, and guarded writes stay here.
 
 Its job ends after the write. Reviewing, running, testing, and revising the
 scaffold remain normal development work.
+
+## Where CliSpecForge fits
+
+A skill gives an agent reusable instructions. A coding agent can inspect a
+repository, edit files, run tools, diagnose failures, and revise its work.
+CliSpecForge owns a smaller boundary around one model request: it turns a
+Markdown contract into a checked file proposal and requires a separate decision
+before writing it.
+
+| Approach | Main job | Best fit |
+| --- | --- | --- |
+| Agent skill | Tell an agent how to approach recurring work. | Conventions, checklists, and reusable workflows inside an agent host. |
+| Coding agent | Work interactively with repository context and tools. | Existing projects, patches, tests, diagnosis, and repair. |
+| CliSpecForge | Enforce a provider-neutral, single-pass spec-to-files handoff. | Small greenfield Python CLI scaffolds that should be reviewed before they reach disk. |
+
+The distinction is executable policy. Skills can request relative paths,
+complete files, and approval before writes, but their effect depends on the
+agent and its host. CliSpecForge parses the response itself, rejects unsafe or
+duplicate targets, escapes terminal control characters, previews complete file
+contents, and requires `--apply` before writing. Those checks run outside the
+model.
+
+This narrow scope also keeps the mechanics easy to inspect and test. The same
+spec, optional instruction skills, file contract, and guarded-write path work
+through the supported Anthropic and OpenAI adapters. Model output still varies,
+and CliSpecForge does not test or repair the generated project.
+
+Use CliSpecForge when the CLI contract is settled and you want a bounded,
+review-first scaffold step. Use a coding agent for substantive repository work
+that needs discovery, patching, execution, feedback, or Git. Skills complement
+both approaches by carrying reusable guidance.
 
 ## Install
 
 Install the tagged release with [pipx](https://pipx.pypa.io/):
 
 ```bash
-pipx install "git+https://github.com/lilabrooks/clispecforge.git@v0.6.0"
+pipx install "git+https://github.com/lilabrooks/clispecforge.git@v0.7.0"
 clispecforge providers
 ```
 
@@ -90,9 +123,49 @@ The tool has no conversation loop, autonomous retry, code execution, test
 runner, Git integration, or repository-aware patching. A response stopped at
 the configured output-token limit fails instead of being treated as complete.
 
+## Apply a response you already have
+
+`plan` and `apply` take a response that already exists, in the same `FILE:`
+format `build` consumes. Neither contacts a provider, so an agent host, a saved
+transcript, or a recorded fixture can supply the generation while CliSpecForge
+keeps the parsing, path checks, preview, and guarded writes:
+
+```bash
+clispecforge plan response.txt --out-dir ./generated
+clispecforge apply response.txt --out-dir ./generated
+clispecforge apply response.txt --out-dir ./generated --force
+```
+
+Pass `-` instead of a filename to read the response from standard input.
+
+`plan` prints the response SHA-256 on its first line and writes nothing. Pass
+that digest back to tie the write to the response you actually reviewed:
+
+```bash
+clispecforge apply response.txt --out-dir ./generated --expect-sha256 <digest-from-plan>
+```
+
+`apply` fails without writing if the response changed since the preview. The
+digest is an integrity check against drift between approval and write, not a
+signature or a statement that the generated code is correct.
+
+A response with no complete `FILE:` block is an error for both commands, and
+`plan` rejects duplicate targets so an approved plan is one `apply` can carry
+out.
+
+Report the installed version with:
+
+```bash
+clispecforge --version
+```
+
 ## Write safeguards
 
-- Preview is the default. Writes require `--apply`.
+These apply to `build`, `plan`, and `apply` alike; the checks are shared code,
+not repeated per command.
+
+- Preview is the default. Writes require `build --apply` or the separate
+  `apply` command.
 - Existing targets detected during preflight require the explicit `--force`
   flag.
 - Absolute paths, parent traversal, symbolic-link escapes, and duplicate
