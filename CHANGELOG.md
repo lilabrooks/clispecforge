@@ -4,6 +4,8 @@ All notable changes to this project are documented here. The format is based on 
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-08-01
+
 ### Added
 
 - Added a standalone greeting CLI example with its own package metadata and tests.
