@@ -5,7 +5,8 @@
 This repository contains a small, single-pass Python CLI scaffold generator.
 It validates Markdown specifications, adds optional instruction skills, sends
 one request to a selected model provider, previews the returned file plan, and
-writes approved files.
+writes approved files. `plan` and `apply` run the same preview and write path
+against a response that already exists, without contacting a provider.
 
 ## Scope
 

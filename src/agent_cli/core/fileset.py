@@ -74,12 +74,8 @@ def resolve_target_path(out_dir: Path, generated: GeneratedFile) -> Path:
     return target
 
 
-def write_generated_files(
-    files: list[GeneratedFile],
-    targets: list[Path],
-    *,
-    force: bool = False,
-) -> None:
+def check_duplicate_targets(targets: list[Path]) -> None:
+    """Raise when two generated files resolve to the same path."""
     seen: set[Path] = set()
     duplicates: list[Path] = []
     for target in targets:
@@ -91,6 +87,15 @@ def write_generated_files(
         joined = ", ".join(str(path) for path in duplicates)
         msg = f"Duplicate generated file target(s): {joined}"
         raise ValueError(msg)
+
+
+def write_generated_files(
+    files: list[GeneratedFile],
+    targets: list[Path],
+    *,
+    force: bool = False,
+) -> None:
+    check_duplicate_targets(targets)
 
     if not force:
         existing = [target for target in targets if target.exists()]

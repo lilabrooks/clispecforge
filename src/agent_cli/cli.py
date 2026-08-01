@@ -1,10 +1,14 @@
 import argparse
+import hashlib
 import sys
+from collections.abc import Callable
 from pathlib import Path
 
+from agent_cli import __version__
 from agent_cli.config.settings import ConfigurationError, Settings
 from agent_cli.core.fileset import (
     GeneratedFile,
+    check_duplicate_targets,
     parse_generated_files,
     resolve_target_path,
     write_generated_files,
@@ -18,6 +22,11 @@ from agent_cli.skills.loader import list_skills, load_skill, resolve_skill, vali
 from agent_cli.specs.loader import list_specs, load_spec, resolve_spec, validate_spec
 
 FILE_OUTPUT_CONTRACT_SKILL = "file-output-contract"
+STDIN_SOURCE = "-"
+
+# argparse exposes no public type for the object add_subparsers() returns.
+type _Subparsers = argparse._SubParsersAction[FriendlyArgumentParser]
+type _CommandHandler = Callable[[argparse.Namespace], int]
 
 
 class SpecValidationError(ValueError):
@@ -101,20 +110,19 @@ def build(  # noqa: PLR0913 (one flag per --spec/--skill/--all-skills/--strict C
     return result.text, parse_generated_files(result.text)
 
 
-def build_parser() -> argparse.ArgumentParser:
-    parser = FriendlyArgumentParser(
-        prog="clispecforge",
-        description="Generate reviewable Python CLI scaffolds from Markdown specifications.",
-        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-        allow_abbrev=False,
-    )
-    parser.suggest_on_error = True  # type: ignore[attr-defined]
-    subparsers = parser.add_subparsers(
-        dest="command",
-        required=True,
-        parser_class=FriendlyArgumentParser,
-    )
+def read_response_text(source: str) -> str:
+    """Read a recorded provider-style response from a file, or `-` for stdin."""
+    if source == STDIN_SOURCE:
+        return sys.stdin.read()
+    return Path(source).read_text(encoding="utf-8")
 
+
+def response_digest(text: str) -> str:
+    """SHA-256 of the decoded response text, tying one `apply` to its `plan`."""
+    return hashlib.sha256(text.encode("utf-8")).hexdigest()
+
+
+def add_run_parser(subparsers: _Subparsers) -> None:
     run_parser = subparsers.add_parser("run", help="Run one prompt through the configured agent.")
     run_parser.add_argument("prompt", help="Task or question for the agent.")
     run_parser.add_argument("--provider", "-p", help="Provider adapter to use.")
@@ -132,6 +140,8 @@ def build_parser() -> argparse.ArgumentParser:
         help="Attach every Markdown agent skill from the default skill root.",
     )
 
+
+def add_spec_parser(subparsers: _Subparsers) -> None:
     spec_parser = subparsers.add_parser("spec", help="Work with Markdown CLI specs.")
     spec_subparsers = spec_parser.add_subparsers(
         dest="spec_command",
@@ -159,6 +169,8 @@ def build_parser() -> argparse.ArgumentParser:
         "--root", default=str(default_spec_root()), help="Spec root folder."
     )
 
+
+def add_skill_parser(subparsers: _Subparsers) -> None:
     skill_parser = subparsers.add_parser("skill", help="Work with Markdown agent skills.")
     skill_subparsers = skill_parser.add_subparsers(
         dest="skill_command",
@@ -189,6 +201,8 @@ def build_parser() -> argparse.ArgumentParser:
         "--root", default=str(default_skill_root()), help="Skill root folder."
     )
 
+
+def add_build_parser(subparsers: _Subparsers) -> None:
     build_cmd_parser = subparsers.add_parser(
         "build",
         help="Run the agent under the file-output contract and write the files it returns.",
@@ -232,6 +246,75 @@ def build_parser() -> argparse.ArgumentParser:
         ),
     )
 
+
+def add_offline_parsers(subparsers: _Subparsers) -> None:
+    """Register the commands that consume an existing response without a provider."""
+    plan_parser = subparsers.add_parser(
+        "plan",
+        help="Preview the files in an existing response. Makes no model request.",
+        description=(
+            "Parse an existing provider-style response, validate every target, and print "
+            "the terminal-safe contents. No provider is contacted and nothing is written."
+        ),
+    )
+    plan_parser.add_argument("response", help=f"Response file, or {STDIN_SOURCE!r} for stdin.")
+    plan_parser.add_argument(
+        "--out-dir",
+        default=".",
+        help="Directory the generated files would be written under.",
+    )
+
+    apply_parser = subparsers.add_parser(
+        "apply",
+        help="Write the files in an existing response. Makes no model request.",
+        description=(
+            "Parse an existing provider-style response and write its files. No provider is "
+            "contacted. Unsafe paths, duplicate targets, and existing files are rejected "
+            "before anything is written."
+        ),
+    )
+    apply_parser.add_argument("response", help=f"Response file, or {STDIN_SOURCE!r} for stdin.")
+    apply_parser.add_argument(
+        "--out-dir",
+        default=".",
+        help="Directory generated files are written under.",
+    )
+    apply_parser.add_argument(
+        "--force",
+        action="store_true",
+        help="Overwrite existing files.",
+    )
+    apply_parser.add_argument(
+        "--expect-sha256",
+        help="Require the response to match this digest, as reported by 'clispecforge plan'.",
+    )
+
+
+def build_parser() -> argparse.ArgumentParser:
+    parser = FriendlyArgumentParser(
+        prog="clispecforge",
+        description="Generate reviewable Python CLI scaffolds from Markdown specifications.",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+        allow_abbrev=False,
+    )
+    parser.suggest_on_error = True  # type: ignore[attr-defined]
+    parser.add_argument(
+        "--version",
+        action="version",
+        version=f"clispecforge {__version__}",
+        help="Show the installed CliSpecForge version and exit.",
+    )
+    subparsers = parser.add_subparsers(
+        dest="command",
+        required=True,
+        parser_class=FriendlyArgumentParser,
+    )
+
+    add_run_parser(subparsers)
+    add_spec_parser(subparsers)
+    add_skill_parser(subparsers)
+    add_build_parser(subparsers)
+    add_offline_parsers(subparsers)
     subparsers.add_parser("providers", help="Show installed provider adapters.")
     return parser
 
@@ -239,32 +322,12 @@ def build_parser() -> argparse.ArgumentParser:
 def main(argv: list[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
+    handler = COMMAND_HANDLERS.get(args.command)
+    if handler is None:
+        parser.error(f"Unknown command {args.command!r}")
 
     try:
-        if args.command == "run":
-            write_stdout_line(
-                run(
-                    prompt=args.prompt,
-                    provider=args.provider,
-                    spec=args.spec,
-                    skills=args.skill,
-                    all_skills=args.all_skills,
-                )
-            )
-            return 0
-
-        if args.command == "build":
-            return handle_build_command(args)
-
-        if args.command == "spec":
-            return handle_spec_command(args)
-
-        if args.command == "skill":
-            return handle_skill_command(args)
-
-        if args.command == "providers":
-            write_stdout_line("\n".join(available_providers()))
-            return 0
+        return handler(args)
     except FileNotFoundError as error:
         parser.exit(
             1,
@@ -287,9 +350,6 @@ def main(argv: list[str] | None = None) -> int:
             f"Error: {error}\nTry 'clispecforge providers' to see available providers.\n",
         )
 
-    parser.error(f"Unknown command {args.command!r}")
-    return 2
-
 
 def write_stdout_line(value: object) -> None:
     sys.stdout.write(f"{value}\n")
@@ -308,6 +368,63 @@ def terminal_safe_text(value: str) -> str:
         else:
             safe.append(ascii(character)[1:-1])
     return "".join(safe)
+
+
+def resolve_targets(out_dir: Path, files: list[GeneratedFile]) -> list[Path] | None:
+    """Resolve every generated path, reporting the first unsafe one on stderr."""
+    try:
+        return [resolve_target_path(out_dir, generated) for generated in files]
+    except ValueError as error:
+        write_stderr_line(f"Error: {error}")
+        return None
+
+
+def print_file_plan(
+    files: list[GeneratedFile],
+    targets: list[Path],
+    out_dir: Path,
+    *,
+    follow_up: str,
+) -> None:
+    """Print the proposed targets and their terminal-safe contents."""
+    write_stdout_line(f"Plan: {len(files)} file(s) under {out_dir}:")
+    for generated, target in zip(files, targets, strict=True):
+        write_stdout_line(f"  {target}")
+        write_stdout_line(f"\n--- {target} ---")
+        write_stdout_line(terminal_safe_text(generated.content))
+        write_stdout_line(f"--- end {target} ---")
+    write_stdout_line(follow_up)
+
+
+def write_file_plan(files: list[GeneratedFile], targets: list[Path], *, force: bool) -> int:
+    try:
+        write_generated_files(files, targets, force=force)
+    except (FileExistsError, ValueError) as error:
+        write_stderr_line(f"Error: {error}")
+        return 1
+
+    for target in targets:
+        write_stdout_line(f"Wrote {target}")
+    return 0
+
+
+def handle_run_command(args: argparse.Namespace) -> int:
+    write_stdout_line(
+        run(
+            prompt=args.prompt,
+            provider=args.provider,
+            spec=args.spec,
+            skills=args.skill,
+            all_skills=args.all_skills,
+        )
+    )
+    return 0
+
+
+def handle_providers_command(args: argparse.Namespace) -> int:
+    del args  # the providers command takes no options
+    write_stdout_line("\n".join(available_providers()))
+    return 0
 
 
 def handle_build_command(args: argparse.Namespace) -> int:
@@ -333,31 +450,88 @@ def handle_build_command(args: argparse.Namespace) -> int:
         return 0
 
     out_dir = Path(args.out_dir)
+    targets = resolve_targets(out_dir, files)
+    if targets is None:
+        return 1
+
+    if not args.apply:
+        print_file_plan(
+            files,
+            targets,
+            out_dir,
+            follow_up="Re-run with --apply to write these files.",
+        )
+        return 0
+
+    return write_file_plan(files, targets, force=args.force)
+
+
+def read_response_files(source: str) -> tuple[str, list[GeneratedFile]] | None:
+    """Read and parse a recorded response, reporting why it is unusable."""
+    label = "standard input" if source == STDIN_SOURCE else source
     try:
-        targets = [resolve_target_path(out_dir, generated) for generated in files]
+        text = read_response_text(source)
+    except (OSError, UnicodeDecodeError) as error:
+        write_stderr_line(f"Error: cannot read response from {label}: {error}")
+        return None
+
+    files = parse_generated_files(text)
+    if not files:
+        write_stderr_line(f"Error: no complete 'FILE:' blocks found in {label}.")
+        write_stderr_line(
+            "Try 'clispecforge skill show file-output-contract' for the expected format."
+        )
+        return None
+    return text, files
+
+
+def handle_plan_command(args: argparse.Namespace) -> int:
+    loaded = read_response_files(args.response)
+    if loaded is None:
+        return 1
+    text, files = loaded
+
+    out_dir = Path(args.out_dir)
+    targets = resolve_targets(out_dir, files)
+    if targets is None:
+        return 1
+
+    try:
+        check_duplicate_targets(targets)
     except ValueError as error:
         write_stderr_line(f"Error: {error}")
         return 1
 
-    if not args.apply:
-        write_stdout_line(f"Plan: {len(files)} file(s) under {out_dir}:")
-        for generated, target in zip(files, targets, strict=True):
-            write_stdout_line(f"  {target}")
-            write_stdout_line(f"\n--- {target} ---")
-            write_stdout_line(terminal_safe_text(generated.content))
-            write_stdout_line(f"--- end {target} ---")
-        write_stdout_line("Re-run with --apply to write these files.")
-        return 0
+    digest = response_digest(text)
+    write_stdout_line(f"Response SHA-256: {digest}")
+    print_file_plan(
+        files,
+        targets,
+        out_dir,
+        follow_up=(f"Run 'clispecforge apply' with --expect-sha256 {digest} to write these files."),
+    )
+    return 0
 
-    try:
-        write_generated_files(files, targets, force=args.force)
-    except (FileExistsError, ValueError) as error:
-        write_stderr_line(f"Error: {error}")
+
+def handle_apply_command(args: argparse.Namespace) -> int:
+    loaded = read_response_files(args.response)
+    if loaded is None:
+        return 1
+    text, files = loaded
+
+    digest = response_digest(text)
+    expected = args.expect_sha256
+    if expected is not None and expected.strip().lower() != digest:
+        write_stderr_line(f"Error: response digest mismatch. Expected {expected}, read {digest}.")
+        write_stderr_line("Re-run 'clispecforge plan' and review this response before applying it.")
         return 1
 
-    for target in targets:
-        write_stdout_line(f"Wrote {target}")
-    return 0
+    out_dir = Path(args.out_dir)
+    targets = resolve_targets(out_dir, files)
+    if targets is None:
+        return 1
+
+    return write_file_plan(files, targets, force=args.force)
 
 
 def handle_spec_command(args: argparse.Namespace) -> int:
@@ -420,6 +594,17 @@ def handle_skill_command(args: argparse.Namespace) -> int:
         return 0 if all(result.ok for result in results) else 1
 
     raise ValueError(f"Unknown skill command {args.skill_command!r}")
+
+
+COMMAND_HANDLERS: dict[str, _CommandHandler] = {
+    "run": handle_run_command,
+    "build": handle_build_command,
+    "plan": handle_plan_command,
+    "apply": handle_apply_command,
+    "spec": handle_spec_command,
+    "skill": handle_skill_command,
+    "providers": handle_providers_command,
+}
 
 
 if __name__ == "__main__":
