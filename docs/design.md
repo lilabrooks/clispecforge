@@ -13,7 +13,8 @@ tools.
 5. Fail if the provider reports that the response hit the output-token limit.
 6. Parse complete `FILE:` blocks from the response.
 7. Reject unsafe paths and duplicate resolved targets.
-8. Print the proposed targets, or write them when `--apply` is present.
+8. Print the proposed targets and terminal-safe contents, or write them when
+   `--apply` is present.
 
 The default echo provider exercises prompt assembly without credentials or a
 network call. Anthropic and OpenAI support is installed through optional extras.

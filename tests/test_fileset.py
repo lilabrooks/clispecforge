@@ -77,6 +77,45 @@ def test_parse_generated_files_skips_unclosed_fence() -> None:
     assert parse_generated_files(text) == []
 
 
+def test_parse_generated_files_matches_variable_length_fence() -> None:
+    text = "\n".join(
+        [
+            "FILE: README.md",
+            "````markdown",
+            "# Example",
+            "",
+            "```bash",
+            "example --help",
+            "```",
+            "",
+            "Text after the inner fence.",
+            "````",
+        ]
+    )
+
+    files = parse_generated_files(text)
+
+    assert files == [
+        GeneratedFile(
+            path="README.md",
+            content=("# Example\n\n```bash\nexample --help\n```\n\nText after the inner fence."),
+        )
+    ]
+
+
+def test_parse_generated_files_rejects_mismatched_closing_fence() -> None:
+    text = "\n".join(
+        [
+            "FILE: README.md",
+            "````markdown",
+            "# Incomplete",
+            "```",
+        ]
+    )
+
+    assert parse_generated_files(text) == []
+
+
 def test_resolve_target_path_rejects_absolute_path(tmp_path: Path) -> None:
     generated = GeneratedFile(path="/etc/passwd", content="x")
 
@@ -86,6 +125,13 @@ def test_resolve_target_path_rejects_absolute_path(tmp_path: Path) -> None:
 
 def test_resolve_target_path_rejects_parent_traversal(tmp_path: Path) -> None:
     generated = GeneratedFile(path="../outside.txt", content="x")
+
+    with pytest.raises(ValueError, match="Unsafe or invalid file path"):
+        resolve_target_path(tmp_path, generated)
+
+
+def test_resolve_target_path_rejects_control_character(tmp_path: Path) -> None:
+    generated = GeneratedFile(path="escape\x1b[2J.txt", content="x")
 
     with pytest.raises(ValueError, match="Unsafe or invalid file path"):
         resolve_target_path(tmp_path, generated)

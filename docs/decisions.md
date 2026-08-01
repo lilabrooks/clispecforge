@@ -25,13 +25,18 @@ continues to work with a base installation.
 ## Plain-text file output
 
 `clispecforge build` asks providers for `FILE: relative/path` markers followed by
-fenced code blocks. The format is easy to inspect and works across providers.
-A block is accepted only after its closing fence is found. Model output remains
-untrusted and must pass parser and path checks before any write.
+fenced code blocks. Opening and closing fences must use the same number of
+backticks, with a three-backtick minimum. Longer outer fences allow Markdown
+files to contain ordinary fenced examples without truncation. The format is
+easy to inspect and works across providers. A block is accepted only after its
+matching closing fence is found. Model output remains untrusted and must pass
+parser and path checks before any write.
 
 ## Guarded writes by default
 
-`clispecforge build` previews a plan unless `--apply` is supplied. Targets that
+`clispecforge build` previews a plan and terminal-safe file contents unless
+`--apply` is supplied. Control and formatting characters are escaped in the
+preview so model output cannot send them directly to the terminal. Targets that
 exist during preflight require `--force`. Targets are resolved and checked
 against the selected output directory, including through symbolic links.
 Duplicate resolved targets fail the batch before any file is written. These

@@ -1,14 +1,13 @@
 # CliSpecForge
 
-[![Tests](https://github.com/lilabrooks/clispecforge/actions/workflows/tests.yml/badge.svg)](https://github.com/lilabrooks/clispecforge/actions/workflows/tests.yml)
-[![Coverage](https://github.com/lilabrooks/clispecforge/actions/workflows/coverage.yml/badge.svg)](https://github.com/lilabrooks/clispecforge/actions/workflows/coverage.yml)
+[![Quality](https://github.com/lilabrooks/clispecforge/actions/workflows/quality.yml/badge.svg)](https://github.com/lilabrooks/clispecforge/actions/workflows/quality.yml)
 [![Python 3.12+](https://img.shields.io/badge/python-3.12%2B-blue)](pyproject.toml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
 CliSpecForge turns a Markdown specification for a small Python CLI into a
-reviewable file plan. It sends one request to Anthropic or OpenAI, previews the
-complete fenced file blocks returned by the model, and writes them only when
-you pass `--apply`.
+reviewable file set. It sends one request to Anthropic or OpenAI, prints the
+complete file contents with terminal control characters escaped, and writes
+them only when you pass `--apply`.
 
 Its job ends after the write. Reviewing, running, testing, and revising the
 scaffold remain normal development work.
@@ -18,7 +17,7 @@ scaffold remain normal development work.
 Install the tagged release with [pipx](https://pipx.pypa.io/):
 
 ```bash
-pipx install "git+https://github.com/lilabrooks/clispecforge.git@v0.5.0"
+pipx install "git+https://github.com/lilabrooks/clispecforge.git@v0.6.0"
 clispecforge providers
 ```
 
@@ -40,8 +39,8 @@ clispecforge build --apply --out-dir "$demo_dir" "$demo_prompt"
 python3 "$demo_dir/hello.py"
 ```
 
-The first build prints a one-file plan. The second writes `hello.py`, and the
-last command prints:
+The first build prints a one-file plan and its contents. The second writes
+`hello.py`, and the last command prints:
 
 ```text
 Hello from CliSpecForge
@@ -73,8 +72,9 @@ Add `--apply --out-dir ./greeting-project` after reviewing the plan. Anthropic
 works the same way with `pipx inject clispecforge anthropic`,
 `ANTHROPIC_API_KEY`, and `CLISPECFORGE_PROVIDER=anthropic`.
 
-Model responses can vary. Treat every returned file as untrusted input and
-review its contents before applying or running it.
+Model responses can vary. Treat every returned file as untrusted input. The
+preview escapes terminal control characters and prints each file's contents for
+review before applying or running it.
 
 ## What happens on `build`
 
@@ -82,7 +82,8 @@ review its contents before applying or running it.
 2. It attaches any selected instruction skills and a plain-text file contract.
 3. The configured provider receives one completion request.
 4. Complete `FILE: relative/path` blocks become a proposed file set.
-5. CliSpecForge validates every target and prints the plan.
+5. CliSpecForge validates every target and prints the terminal-safe plan and
+   file contents.
 6. `--apply` writes the files beneath the selected output directory.
 
 The tool has no conversation loop, autonomous retry, code execution, test
@@ -97,6 +98,10 @@ the configured output-token limit fails instead of being treated as complete.
 - Absolute paths, parent traversal, symbolic-link escapes, and duplicate
   resolved targets are rejected.
 - An unfinished fenced block is ignored.
+- Opening and closing fences must have the same number of backticks. Longer
+  outer fences preserve Markdown files containing ordinary fenced examples.
+- Control and formatting characters are escaped in previews, and rejected in
+  generated paths.
 - Duplicate and existing-target checks happen before any file is written.
 
 These checks reduce accidental writes and common path escapes. They are not a
@@ -156,6 +161,24 @@ python -m build examples/greeting-cli
 The example is maintained as a readable sample. It is not evidence that an
 arbitrary model response will pass its acceptance tests.
 
+## Deterministic replay smoke test
+
+[`examples/replay/greeting-package-response.txt`](examples/replay/greeting-package-response.txt)
+records one complete provider-style response. Its generated README contains an
+inner fenced console example, exercising the variable-length outer fence.
+
+Run the complete local handoff:
+
+```bash
+make smoke-replay
+```
+
+The smoke test parses the recorded response, writes all proposed files under a
+temporary directory containing spaces and brackets, builds a wheel, installs it
+in a fresh environment, and runs `greet Lila` outside the checkout. It is
+deterministic evidence for the file handoff and packaging path. It does not call
+a model or measure model-generated code quality.
+
 ## Development
 
 ```bash
@@ -167,8 +190,10 @@ make coverage
 ```
 
 `make check` runs Ruff, mypy, pytest, and branch coverage with a 90% floor.
-`make coverage` runs the test-and-coverage portion by itself. CI covers Python
-3.12, 3.13, and 3.14. See
+`make coverage` runs the test-and-coverage portion by itself. `make
+smoke-replay` exercises the recorded-response package handoff. CI runs the
+everyday gate on Python 3.12, 3.13, and 3.14, then runs the replay smoke test on
+Python 3.14. See
 [CONTRIBUTING.md](CONTRIBUTING.md) for the contribution workflow.
 
 ## More detail

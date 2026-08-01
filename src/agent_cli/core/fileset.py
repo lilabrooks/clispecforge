@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 _FILE_MARKER_PREFIX = "FILE:"
-_FENCE_PREFIX = "```"
+_MINIMUM_FENCE_LENGTH = 3
 
 
 @dataclass(frozen=True, slots=True)
@@ -32,12 +32,18 @@ def parse_generated_files(text: str) -> list[GeneratedFile]:
         while index < len(lines) and not lines[index].strip():
             index += 1
 
-        if index >= len(lines) or not lines[index].strip().startswith(_FENCE_PREFIX):
+        if index >= len(lines):
+            continue
+
+        opening_fence = lines[index].strip()
+        fence_length = len(opening_fence) - len(opening_fence.lstrip("`"))
+        if fence_length < _MINIMUM_FENCE_LENGTH:
             continue  # no fenced block follows; treat the marker as prose
+        closing_fence = "`" * fence_length
 
         index += 1  # skip the opening fence
         content_lines: list[str] = []
-        while index < len(lines) and lines[index].strip() != _FENCE_PREFIX:
+        while index < len(lines) and lines[index].strip() != closing_fence:
             content_lines.append(lines[index])
             index += 1
         if index >= len(lines):
@@ -52,7 +58,12 @@ def parse_generated_files(text: str) -> list[GeneratedFile]:
 
 def resolve_target_path(out_dir: Path, generated: GeneratedFile) -> Path:
     relative = Path(generated.path)
-    if not generated.path.strip() or relative.is_absolute() or ".." in relative.parts:
+    if (
+        not generated.path.strip()
+        or any(not character.isprintable() for character in generated.path)
+        or relative.is_absolute()
+        or ".." in relative.parts
+    ):
         msg = f"Unsafe or invalid file path in agent output: {generated.path!r}"
         raise ValueError(msg)
 

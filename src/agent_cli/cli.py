@@ -299,6 +299,17 @@ def write_stderr_line(value: object) -> None:
     sys.stderr.write(f"{value}\n")
 
 
+def terminal_safe_text(value: str) -> str:
+    """Escape control and formatting characters before printing model output."""
+    safe: list[str] = []
+    for character in value:
+        if character in {"\n", "\t"} or character.isprintable():
+            safe.append(character)
+        else:
+            safe.append(ascii(character)[1:-1])
+    return "".join(safe)
+
+
 def handle_build_command(args: argparse.Namespace) -> int:
     try:
         text, files = build(
@@ -330,8 +341,11 @@ def handle_build_command(args: argparse.Namespace) -> int:
 
     if not args.apply:
         write_stdout_line(f"Plan: {len(files)} file(s) under {out_dir}:")
-        for target in targets:
+        for generated, target in zip(files, targets, strict=True):
             write_stdout_line(f"  {target}")
+            write_stdout_line(f"\n--- {target} ---")
+            write_stdout_line(terminal_safe_text(generated.content))
+            write_stdout_line(f"--- end {target} ---")
         write_stdout_line("Re-run with --apply to write these files.")
         return 0
 

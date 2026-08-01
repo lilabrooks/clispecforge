@@ -26,6 +26,13 @@ changes also need a wheel build and a fresh-environment smoke test from outside
 the checkout. Changes under `examples/greeting-cli/` also require its
 independent build and `greet Lila` smoke test.
 
+Changes to the file-output contract, parser, or generated-file handoff also
+need the recorded-response smoke test:
+
+```bash
+make smoke-replay
+```
+
 Keep tests focused on observable behavior. Use `tmp_path`, `capsys`, and
 `monkeypatch` for filesystem, terminal, and provider boundaries.
 
