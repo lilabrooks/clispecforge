@@ -1,12 +1,12 @@
 from typing import TYPE_CHECKING
 
-from agent_cli.core.models import CompletionRequest, CompletionResponse
+from agent_cli.core.models import CompletionRequest, CompletionResponse, ResponseTruncatedError
 
 if TYPE_CHECKING:
     from openai.types.chat import ChatCompletionMessageParam
 
 DEFAULT_MODEL = "gpt-4o-mini"
-DEFAULT_MAX_TOKENS = 1024
+DEFAULT_MAX_TOKENS = 4096
 
 
 class OpenAILanguageModel:
@@ -17,9 +17,9 @@ class OpenAILanguageModel:
     installed.
     """
 
-    def __init__(self, model: str = DEFAULT_MODEL, max_tokens: int = DEFAULT_MAX_TOKENS) -> None:
-        self._model = model
-        self._max_tokens = max_tokens
+    def __init__(self, model: str | None = None, max_tokens: int | None = None) -> None:
+        self._model = model if model is not None else DEFAULT_MODEL
+        self._max_tokens = max_tokens if max_tokens is not None else DEFAULT_MAX_TOKENS
 
     def complete(self, request: CompletionRequest) -> CompletionResponse:
         import openai  # noqa: PLC0415 (kept optional; see module docstring)
@@ -41,6 +41,8 @@ class OpenAILanguageModel:
             max_tokens=self._max_tokens,
             messages=messages,
         )
+        if response.choices[0].finish_reason == "length":
+            raise ResponseTruncatedError("OpenAI", self._max_tokens)
         text = response.choices[0].message.content or ""
         usage = {}
         if response.usage is not None:

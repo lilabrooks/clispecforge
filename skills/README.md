@@ -5,7 +5,7 @@ Agent skills are Markdown instructions that shape how the agent works while it b
 Use them with CLI specs:
 
 ```bash
-agent run --spec example --skill focused-implementation --skill stdlib-cli-ux "Implement this feature"
+clispecforge run --spec example --skill focused-implementation --skill stdlib-cli-ux "Implement this feature"
 ```
 
 Recommended folders:
@@ -31,5 +31,5 @@ These skills are inspired by `multica-ai/andrej-karpathy-skills`, adapted for th
 Common stack for implementing a CLI feature:
 
 ```bash
-agent run --spec example --skill goal-driven-execution --skill focused-implementation --skill stdlib-cli-ux --skill cli-test-coverage "Implement this feature"
+clispecforge run --spec example --skill goal-driven-execution --skill focused-implementation --skill stdlib-cli-ux --skill cli-test-coverage "Implement this feature"
 ```

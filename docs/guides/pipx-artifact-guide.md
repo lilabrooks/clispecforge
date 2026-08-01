@@ -17,46 +17,45 @@ This guide shows how to install from GitHub, create an installable artifact, and
 Use this when someone wants to install the CLI without cloning the repo.
 
 ```bash
-pipx install "git+https://github.com/lilabrooks/spec-agent-cli.git"
+pipx install "git+https://github.com/lilabrooks/clispecforge.git"
 ```
 
-Test the installed commands:
+Test the installed command:
 
 ```bash
-agent providers
-my-cli --basic
+clispecforge providers
 ```
 
 Install from a specific branch:
 
 ```bash
-pipx install "git+https://github.com/lilabrooks/spec-agent-cli.git@main"
+pipx install "git+https://github.com/lilabrooks/clispecforge.git@main"
 ```
 
 Install from a tag after you create one:
 
 ```bash
-pipx install "git+https://github.com/lilabrooks/spec-agent-cli.git@v0.3.0"
+pipx install "git+https://github.com/lilabrooks/clispecforge.git@v0.4.0"
 ```
 
 Upgrade later:
 
 ```bash
-pipx upgrade ai-agent-cli
+pipx upgrade clispecforge
 ```
 
 Uninstall:
 
 ```bash
-pipx uninstall ai-agent-cli
+pipx uninstall clispecforge
 ```
 
 ## 2. Enter the project for local artifact builds
 
 ```bash
 # Skip the clone step if you already have a local checkout.
-git clone https://github.com/lilabrooks/spec-agent-cli.git
-cd spec-agent-cli
+git clone https://github.com/lilabrooks/clispecforge.git
+cd clispecforge
 source .venv/bin/activate
 ```
 
@@ -88,22 +87,22 @@ python -m build
 Expected output files:
 
 ```text
-dist/ai_agent_cli-0.3.0.tar.gz
-dist/ai_agent_cli-0.3.0-py3-none-any.whl
+dist/clispecforge-0.4.0.tar.gz
+dist/clispecforge-0.4.0-py3-none-any.whl
 ```
 
-The artifact names use the distribution package name, `ai-agent-cli`, normalized to `ai_agent_cli`. The installed commands are still `agent` and `my-cli`.
+The artifact names use the `clispecforge` distribution name. The wheel installs the `clispecforge` command.
 
 ## 6. Install the wheel with pipx
 
 ```bash
-pipx install dist/ai_agent_cli-0.3.0-py3-none-any.whl
+pipx install dist/clispecforge-0.4.0-py3-none-any.whl
 ```
 
-If `ai-agent-cli` is already installed with pipx, reinstall it:
+If `clispecforge` is already installed with pipx, reinstall it:
 
 ```bash
-pipx reinstall ai-agent-cli
+pipx reinstall clispecforge
 ```
 
 For local development, install the project in editable mode:
@@ -112,21 +111,11 @@ For local development, install the project in editable mode:
 pipx install -e .
 ```
 
-## 7. Test the installed commands
+## 7. Test the installed command
 
 ```bash
-agent providers
-agent spec check my-cli-details
-my-cli --basic
-my-cli --detailed
-```
-
-Expected `my-cli --basic` shape:
-
-```text
-hostname: ...
-system: ...
-machine: ...
+clispecforge providers
+clispecforge spec check my-cli-details
 ```
 
 ## 8. Move the artifact
@@ -134,18 +123,18 @@ machine: ...
 The portable file to share is the wheel:
 
 ```text
-dist/ai_agent_cli-0.3.0-py3-none-any.whl
+dist/clispecforge-0.4.0-py3-none-any.whl
 ```
 
 On another machine with Python and pipx installed:
 
 ```bash
-pipx install /path/to/ai_agent_cli-0.3.0-py3-none-any.whl
-my-cli --basic
+pipx install /path/to/clispecforge-0.4.0-py3-none-any.whl
+clispecforge providers
 ```
 
 ## 9. Uninstall
 
 ```bash
-pipx uninstall ai-agent-cli
+pipx uninstall clispecforge
 ```

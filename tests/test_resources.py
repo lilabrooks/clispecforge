@@ -35,4 +35,4 @@ def test_all_skills_warns_when_no_skills_found(
     captured = capsys.readouterr()
     assert exit_code == 0
     assert "found no skills" in captured.err
-    assert captured.out == "default-agent: Echo provider received: build it\n"
+    assert captured.out == "clispecforge: Echo provider received: build it\n"

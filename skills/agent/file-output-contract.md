@@ -6,7 +6,7 @@ deciders: [Lila Brooks]
 # File output contract
 
 ## Purpose
-Define the exact reply format for tasks that create or change files, so `agent build` can parse the response and write real files to disk.
+Define the exact reply format for tasks that create or change files, so `clispecforge build` can parse the response and write real files to disk.
 
 ## When to use
 Use this whenever the task asks you to implement, generate, scaffold, or otherwise produce files, not just to explain, review, or describe something.

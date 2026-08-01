@@ -1,12 +1,12 @@
 from typing import TYPE_CHECKING
 
-from agent_cli.core.models import CompletionRequest, CompletionResponse
+from agent_cli.core.models import CompletionRequest, CompletionResponse, ResponseTruncatedError
 
 if TYPE_CHECKING:
     from anthropic.types import MessageParam
 
 DEFAULT_MODEL = "claude-opus-4-8"
-DEFAULT_MAX_TOKENS = 1024
+DEFAULT_MAX_TOKENS = 4096
 
 
 class AnthropicLanguageModel:
@@ -17,9 +17,9 @@ class AnthropicLanguageModel:
     without it installed.
     """
 
-    def __init__(self, model: str = DEFAULT_MODEL, max_tokens: int = DEFAULT_MAX_TOKENS) -> None:
-        self._model = model
-        self._max_tokens = max_tokens
+    def __init__(self, model: str | None = None, max_tokens: int | None = None) -> None:
+        self._model = model if model is not None else DEFAULT_MODEL
+        self._max_tokens = max_tokens if max_tokens is not None else DEFAULT_MAX_TOKENS
 
     def complete(self, request: CompletionRequest) -> CompletionResponse:
         import anthropic  # noqa: PLC0415 (kept optional; see module docstring)
@@ -53,6 +53,8 @@ class AnthropicLanguageModel:
                 max_tokens=self._max_tokens,
                 messages=messages,
             )
+        if response.stop_reason == "max_tokens":
+            raise ResponseTruncatedError("Anthropic", self._max_tokens)
         text = "".join(block.text for block in response.content if block.type == "text")
         usage = {
             "input_tokens": response.usage.input_tokens,

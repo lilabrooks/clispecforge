@@ -2,13 +2,14 @@ import argparse
 import sys
 from pathlib import Path
 
-from agent_cli.config.settings import Settings
+from agent_cli.config.settings import ConfigurationError, Settings
 from agent_cli.core.fileset import (
     GeneratedFile,
     parse_generated_files,
     resolve_target_path,
     write_generated_files,
 )
+from agent_cli.core.models import ResponseTruncatedError
 from agent_cli.core.parser import FriendlyArgumentParser
 from agent_cli.providers.registry import available_providers
 from agent_cli.resources import default_skill_root, default_spec_root
@@ -20,7 +21,7 @@ FILE_OUTPUT_CONTRACT_SKILL = "file-output-contract"
 
 
 class SpecValidationError(ValueError):
-    """Raised when `agent build --strict` finds a spec with validation errors."""
+    """Raised when `clispecforge build --strict` finds spec validation errors."""
 
 
 def _validate_spec_or_raise(spec_path: Path, *, strict: bool) -> None:
@@ -34,7 +35,9 @@ def _validate_spec_or_raise(spec_path: Path, *, strict: bool) -> None:
 
     write_stderr_line(f"Warning: spec {spec_path} has validation errors:")
     write_stderr_line(result.format())
-    write_stderr_line("Continuing without --strict. Run 'agent spec check' for the full report.")
+    write_stderr_line(
+        "Continuing without --strict. Run 'clispecforge spec check' for the full report."
+    )
 
 
 def _gather_context_blocks(
@@ -75,6 +78,7 @@ def run(
 
 def build(  # noqa: PLR0913 (one flag per --spec/--skill/--all-skills/--strict CLI option)
     prompt: str,
+    *,
     provider: str | None = None,
     spec: str | None = None,
     skills: list[str] | None = None,
@@ -99,8 +103,8 @@ def build(  # noqa: PLR0913 (one flag per --spec/--skill/--all-skills/--strict C
 
 def build_parser() -> argparse.ArgumentParser:
     parser = FriendlyArgumentParser(
-        prog="agent",
-        description="Run vendor-neutral AI agent workflows.",
+        prog="clispecforge",
+        description="Generate reviewable Python CLI scaffolds from Markdown specifications.",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
         allow_abbrev=False,
     )
@@ -266,13 +270,21 @@ def main(argv: list[str] | None = None) -> int:
             1,
             (
                 f"Error: {error}\n"
-                "Try 'agent spec list' or 'agent skill list' to see available files.\n"
+                "Try 'clispecforge spec list' or 'clispecforge skill list' "
+                "to see available files.\n"
             ),
+        )
+    except ConfigurationError as error:
+        parser.exit(1, f"Error: {error}\n")
+    except ResponseTruncatedError as error:
+        parser.exit(
+            1,
+            f"Error: {error}\nIncrease CLISPECFORGE_MAX_TOKENS and try again.\n",
         )
     except ValueError as error:
         parser.exit(
             1,
-            f"Error: {error}\nTry 'agent providers' to see available providers.\n",
+            f"Error: {error}\nTry 'clispecforge providers' to see available providers.\n",
         )
 
     parser.error(f"Unknown command {args.command!r}")
@@ -299,7 +311,7 @@ def handle_build_command(args: argparse.Namespace) -> int:
         )
     except SpecValidationError as error:
         write_stderr_line(f"Error: {error}")
-        write_stderr_line(f"Try 'agent spec check {args.spec}' to see the full report.")
+        write_stderr_line(f"Try 'clispecforge spec check {args.spec}' to see the full report.")
         return 1
 
     if not files:
@@ -325,7 +337,7 @@ def handle_build_command(args: argparse.Namespace) -> int:
 
     try:
         write_generated_files(files, targets, force=args.force)
-    except FileExistsError as error:
+    except (FileExistsError, ValueError) as error:
         write_stderr_line(f"Error: {error}")
         return 1
 

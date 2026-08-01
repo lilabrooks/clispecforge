@@ -40,6 +40,8 @@ def parse_generated_files(text: str) -> list[GeneratedFile]:
         while index < len(lines) and lines[index].strip() != _FENCE_PREFIX:
             content_lines.append(lines[index])
             index += 1
+        if index >= len(lines):
+            continue  # an incomplete block is not a complete generated file
         index += 1  # skip the closing fence
 
         if path:
@@ -53,7 +55,12 @@ def resolve_target_path(out_dir: Path, generated: GeneratedFile) -> Path:
     if not generated.path.strip() or relative.is_absolute() or ".." in relative.parts:
         msg = f"Unsafe or invalid file path in agent output: {generated.path!r}"
         raise ValueError(msg)
-    return out_dir / relative
+
+    target = out_dir / relative
+    if not target.resolve(strict=False).is_relative_to(out_dir.resolve(strict=False)):
+        msg = f"Unsafe or invalid file path in agent output: {generated.path!r}"
+        raise ValueError(msg)
+    return target
 
 
 def write_generated_files(
@@ -62,6 +69,18 @@ def write_generated_files(
     *,
     force: bool = False,
 ) -> None:
+    seen: set[Path] = set()
+    duplicates: list[Path] = []
+    for target in targets:
+        resolved = target.resolve(strict=False)
+        if resolved in seen and resolved not in duplicates:
+            duplicates.append(resolved)
+        seen.add(resolved)
+    if duplicates:
+        joined = ", ".join(str(path) for path in duplicates)
+        msg = f"Duplicate generated file target(s): {joined}"
+        raise ValueError(msg)
+
     if not force:
         existing = [target for target in targets if target.exists()]
         if existing:

@@ -33,6 +33,3 @@ jobs:
 
       - name: Run mypy
         run: mypy
-
-      - name: Run OKF docs check
-        run: python scripts/check-okf-docs.py

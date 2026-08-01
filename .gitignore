@@ -13,10 +13,5 @@ htmlcov/
 coverage.xml
 .env
 .DS_Store
-.claude/settings.local.json
-CLAUDE.local.md
-.codex/settings.local.json
-Codex.local.md
-.okf-kit-backups/
 .env.*
 !.env.example

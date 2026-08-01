@@ -7,7 +7,7 @@
 #                    this on push, so reach for it mainly to reproduce a
 #                    version-specific failure locally.
 #
-# Individual targets (lint, typecheck, test, okf, coverage) are available too.
+# Individual targets (lint, typecheck, test, coverage) are available too.
 
 PYTHON ?= $(if $(wildcard .venv/bin/python),.venv/bin/python,python3)
 RUFF ?= $(if $(wildcard .venv/bin/ruff),.venv/bin/ruff,ruff)
@@ -25,9 +25,9 @@ SNYK_CODE_SEVERITY ?= low
 SNYK_ORG_ARG := $(if $(SNYK_ORG),--org=$(SNYK_ORG),)
 SNYK_PYTHON_ARG := --command=$(SNYK_PYTHON)
 
-.PHONY: check lint format typecheck test okf coverage snyk snyk-open-source snyk-code check-all
+.PHONY: check lint format typecheck test coverage snyk snyk-open-source snyk-code check-all
 
-check: lint typecheck test okf
+check: lint typecheck test
 
 lint:
 	$(RUFF) check .
@@ -41,9 +41,6 @@ typecheck:
 
 test:
 	$(PYTEST)
-
-okf:
-	$(PYTHON) scripts/check-okf-docs.py
 
 coverage:
 	@$(PYTHON) -c 'import coverage' >/dev/null 2>&1 || { \
@@ -85,7 +82,6 @@ check-all:
 		uv run --python $$v --extra dev -- ruff check . && \
 		uv run --python $$v --extra dev -- ruff format --check . && \
 		uv run --python $$v --extra dev -- mypy && \
-		uv run --python $$v --extra dev -- pytest && \
-		uv run --python $$v --extra dev -- python scripts/check-okf-docs.py || exit 1; \
+		uv run --python $$v --extra dev -- pytest || exit 1; \
 	done
 	@echo "All versions passed."

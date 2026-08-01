@@ -15,6 +15,5 @@ Each spec should be specific enough that an agent can implement the CLI without 
 Run checks with:
 
 ```bash
-agent spec check
+clispecforge spec check
 ```
-

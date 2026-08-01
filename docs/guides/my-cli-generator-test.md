@@ -16,15 +16,15 @@ This guide shows how to test the `my-cli` generated CLI fixture in this repo.
 
 ```bash
 # Skip the clone step if you already have a local checkout.
-git clone https://github.com/lilabrooks/spec-agent-cli.git
-cd spec-agent-cli
+git clone https://github.com/lilabrooks/clispecforge.git
+cd clispecforge
 source .venv/bin/activate
 ```
 
 ## 2. Validate the my-cli spec
 
 ```bash
-agent spec check my-cli-details
+clispecforge spec check my-cli-details
 ```
 
 Expected result:
@@ -33,7 +33,7 @@ Expected result:
 specs/cli/my-cli-details.md: ok
 ```
 
-If `agent` fails with `ModuleNotFoundError: No module named 'agent_cli'`, reinstall the project into the virtualenv:
+If `clispecforge` fails with `ModuleNotFoundError: No module named 'agent_cli'`, reinstall the project into the virtualenv:
 
 ```bash
 python -m pip install -e ".[dev]"
@@ -44,7 +44,7 @@ On macOS, if the error persists, clear hidden flags on the virtualenv and retry:
 ```bash
 chflags -R nohidden .venv
 source .venv/bin/activate
-agent spec check my-cli-details
+clispecforge spec check my-cli-details
 ```
 
 ## 3. Run the implemented my-cli app
@@ -52,7 +52,7 @@ agent spec check my-cli-details
 Basic mode:
 
 ```bash
-my-cli --basic
+python -m agent_cli.commands.my_cli --basic
 ```
 
 Expected shape:
@@ -66,7 +66,7 @@ machine: ...
 Detailed mode:
 
 ```bash
-my-cli --detailed
+python -m agent_cli.commands.my_cli --detailed
 ```
 
 Expected shape:
@@ -85,7 +85,7 @@ python_version: ...
 ## 4. Test the spec-to-agent prompt path
 
 ```bash
-agent run --spec my-cli-details \
+clispecforge run --spec my-cli-details \
   --skill goal-driven-execution \
   --skill focused-implementation \
   --skill stdlib-cli-ux \
@@ -98,7 +98,7 @@ The default provider is `echo`, so this command proves that the Markdown spec an
 To attach every available skill instead of selecting them one by one:
 
 ```bash
-agent run --spec my-cli-details --all-skills "Implement this CLI feature"
+clispecforge run --spec my-cli-details --all-skills "Implement this CLI feature"
 ```
 
 ## 5. Run quality checks
@@ -120,18 +120,20 @@ If you build the project:
 python -m build
 ```
 
-The files in `dist/` use the distribution package name, `ai-agent-cli`, normalized to `ai_agent_cli`:
+The files in `dist/` use the `clispecforge` distribution name:
 
 ```text
-ai_agent_cli-0.3.0.tar.gz
-ai_agent_cli-0.3.0-py3-none-any.whl
+clispecforge-0.4.0.tar.gz
+clispecforge-0.4.0-py3-none-any.whl
 ```
 
-That is expected. The command installed from those artifacts is still:
+The wheel installs only the project command:
 
 ```bash
-my-cli --basic
-my-cli --detailed
+clispecforge providers
 ```
+
+The generated fixture stays available from the repository checkout through
+`python -m agent_cli.commands.my_cli`; it is not a second installed command.
 
 For the full artifact build and pipx install flow, see [pipx-artifact-guide.md](pipx-artifact-guide.md).

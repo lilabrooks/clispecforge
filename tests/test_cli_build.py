@@ -18,6 +18,19 @@ _TASK_WITH_FILE = "\n".join(
     ]
 )
 
+_TASK_WITH_DUPLICATE_FILE = "\n".join(
+    [
+        "FILE: same.txt",
+        "```",
+        "first",
+        "```",
+        "FILE: same.txt",
+        "```",
+        "second",
+        "```",
+    ]
+)
+
 
 def test_build_attaches_file_output_contract_skill() -> None:
     text, files = build_agent_task("say hi, no files needed")
@@ -72,6 +85,17 @@ def test_build_apply_overwrites_with_force(tmp_path: Path) -> None:
 
     assert exit_code == 0
     assert existing.read_text(encoding="utf-8") == "hello world\n"
+
+
+def test_build_apply_rejects_duplicate_targets(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    exit_code = main(["build", "--out-dir", str(tmp_path), "--apply", _TASK_WITH_DUPLICATE_FILE])
+
+    captured = capsys.readouterr()
+    assert exit_code == 1
+    assert "Error: Duplicate generated file target" in captured.err
+    assert not (tmp_path / "same.txt").exists()
 
 
 def test_build_warns_when_no_file_blocks_found(
@@ -166,7 +190,7 @@ def test_build_strict_blocks_on_invalid_spec_before_calling_model(
     assert captured.out == ""
     assert "Error: Spec" in captured.err
     assert "failed validation" in captured.err
-    assert f"agent spec check {spec_path}" in captured.err
+    assert f"clispecforge spec check {spec_path}" in captured.err
 
 
 def test_build_strict_allows_a_valid_spec_through(

@@ -49,6 +49,6 @@ jobs:
         # snyk monitor keys the project on the ephemeral runner hostname and
         # spawns a new dashboard project on every push to main.
         if: github.ref == 'refs/heads/main'
-        run: snyk monitor --file=requirements.txt --package-manager=pip --project-name=spec-agent-cli
+        run: snyk monitor --file=requirements.txt --package-manager=pip --project-name=clispecforge
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
