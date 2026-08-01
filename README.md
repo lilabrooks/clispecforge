@@ -47,12 +47,15 @@ both approaches by carrying reusable guidance.
 
 ## Install
 
-Install the tagged release with [pipx](https://pipx.pypa.io/):
+Install the current `main` branch with [pipx](https://pipx.pypa.io/):
 
 ```bash
-pipx install "git+https://github.com/lilabrooks/clispecforge.git@v0.7.0"
+pipx install "git+https://github.com/lilabrooks/clispecforge.git@main"
 clispecforge providers
 ```
+
+Refresh an existing installation from the newest `main` commit with
+`pipx upgrade clispecforge`.
 
 The base installation uses only the Python standard library. Python 3.12 or
 newer is required.

@@ -17,7 +17,7 @@ This guide shows how to install from GitHub, create an installable artifact, and
 Use this when someone wants to install the CLI without cloning the repo.
 
 ```bash
-pipx install "git+https://github.com/lilabrooks/clispecforge.git"
+pipx install "git+https://github.com/lilabrooks/clispecforge.git@main"
 ```
 
 Test the installed command:
@@ -26,10 +26,10 @@ Test the installed command:
 clispecforge providers
 ```
 
-Install from a specific branch:
+Install from another branch:
 
 ```bash
-pipx install "git+https://github.com/lilabrooks/clispecforge.git@main"
+pipx install "git+https://github.com/lilabrooks/clispecforge.git@branch-name"
 ```
 
 Install the tagged release:
@@ -83,7 +83,8 @@ python -m pip install build hatchling
 python -m build
 ```
 
-Expected output files:
+Artifact versions come from the nearest Git tag and the current commit. A
+checkout at `v0.7.0` produces:
 
 ```text
 dist/clispecforge-0.7.0.tar.gz

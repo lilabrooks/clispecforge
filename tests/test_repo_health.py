@@ -4,6 +4,7 @@ import re
 import shutil
 import subprocess
 import tomllib
+from importlib.metadata import version
 from pathlib import Path
 
 import pytest
@@ -19,15 +20,12 @@ TAG_VERSION = re.compile(r"@v(\d+\.\d+\.\d+)")
 PINNED_REQUIREMENT = re.compile(r"^[A-Za-z0-9_.-]+(?:\[[A-Za-z0-9_,.-]+\])?==")
 
 
-def declared_version() -> str:
-    data = tomllib.loads((REPO_ROOT / "pyproject.toml").read_text(encoding="utf-8"))
-    version = data["project"]["version"]
-    assert isinstance(version, str)
-    return version
+def project_configuration() -> dict[str, object]:
+    return tomllib.loads((REPO_ROOT / "pyproject.toml").read_text(encoding="utf-8"))
 
 
 def project_metadata() -> dict[str, object]:
-    data = tomllib.loads((REPO_ROOT / "pyproject.toml").read_text(encoding="utf-8"))
+    data = project_configuration()
     project = data["project"]
     assert isinstance(project, dict)
     return project
@@ -45,21 +43,32 @@ def scanner_requirements() -> list[str]:
     ]
 
 
-def test_package_version_matches_pyproject() -> None:
-    assert agent_cli.__version__ == declared_version()
+def test_project_derives_versions_from_git() -> None:
+    configuration = project_configuration()
+    project = project_metadata()
+    build_system = configuration["build-system"]
+    tool = configuration["tool"]
+    assert isinstance(build_system, dict)
+    assert isinstance(tool, dict)
+    assert "version" not in project
+    assert project["dynamic"] == ["version"]
+    assert "hatch-vcs>=0.5.0" in build_system["requires"]
+    assert tool["hatch"]["version"] == {"source": "vcs"}
 
 
-def test_changelog_latest_entry_matches_pyproject() -> None:
+def test_package_version_matches_installed_metadata() -> None:
+    assert agent_cli.__version__ == version("clispecforge")
+
+
+def released_version() -> str:
     changelog = (REPO_ROOT / "CHANGELOG.md").read_text(encoding="utf-8")
     match = re.search(r"^## \[(\d+\.\d+\.\d+)\]", changelog, flags=re.MULTILINE)
     assert match is not None, "CHANGELOG.md has no '## [x.y.z]' release heading"
-    assert match.group(1) == declared_version(), (
-        f"CHANGELOG.md latest entry is {match.group(1)}, pyproject.toml says {declared_version()}"
-    )
+    return match.group(1)
 
 
-def test_docs_reference_current_version() -> None:
-    version = declared_version()
+def test_docs_reference_latest_release() -> None:
+    expected_version = released_version()
     docs = [REPO_ROOT / "README.md", *sorted((REPO_ROOT / "docs").rglob("*.md"))]
     stale: list[str] = []
     for doc in docs:
@@ -68,9 +77,9 @@ def test_docs_reference_current_version() -> None:
             stale.extend(
                 f"{doc.relative_to(REPO_ROOT)}: {found}"
                 for found in pattern.findall(text)
-                if found != version
+                if found != expected_version
             )
-    assert not stale, f"stale version references (expected {version}): {stale}"
+    assert not stale, f"stale version references (expected {expected_version}): {stale}"
 
 
 def test_scanner_requirements_mirror_optional_dependencies() -> None:
