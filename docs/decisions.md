@@ -22,6 +22,15 @@ The base package uses the Python standard library. Provider SDKs are opt-in
 extras and are imported only when selected. The credential-free echo path
 continues to work with a base installation.
 
+## Git-derived package versions
+
+Hatch VCS derives the distribution version from release tags and commit
+distance. A tagged checkout reports the release version, while each later
+commit receives a distinct development version containing its Git revision.
+The command reads that value from installed package metadata, so the build
+plugin adds no runtime dependency. This makes installations from `main`
+identifiable without maintaining a second version string in source code.
+
 ## Plain-text file output
 
 `clispecforge build` asks providers for `FILE: relative/path` markers followed by
