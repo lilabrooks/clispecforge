@@ -22,18 +22,27 @@ CliSpecForge owns a smaller boundary around one model request: it turns a
 Markdown contract into a checked file proposal and requires a separate decision
 before writing it.
 
-| Approach | Main job | Best fit |
+| Layer | Main job | Best fit |
 | --- | --- | --- |
 | Agent skill | Tell an agent how to approach recurring work. | Conventions, checklists, and reusable workflows inside an agent host. |
 | Coding agent | Work interactively with repository context and tools. | Existing projects, patches, tests, diagnosis, and repair. |
 | CliSpecForge | Enforce a provider-neutral, single-pass spec-to-files handoff. | Small greenfield Python CLI scaffolds that should be reviewed before they reach disk. |
 
-The distinction is executable policy. Skills can request relative paths,
-complete files, and approval before writes, but their effect depends on the
-agent and its host. CliSpecForge parses the response itself, rejects unsafe or
-duplicate targets, escapes terminal control characters, previews complete file
-contents, and requires `--apply` before writing. Those checks run outside the
-model.
+These roles can be combined. The
+[`clispecforge-scaffold`](https://github.com/lilabrooks/lila-agent-skills/tree/main/skills/clispecforge-scaffold)
+skill drives the offline handoff from Codex or Claude Code: it checks the
+request against its scope, validates the spec, has the host model produce the
+complete file blocks, previews them with `plan`, and waits for explicit approval
+before `apply`.
+
+The skill defines the procedure and asks for approval; CliSpecForge enforces
+the mechanical handoff checks. Skill instructions depend on the agent and its
+host following them. CliSpecForge independently parses the response, rejects
+unsafe or duplicate targets, escapes terminal control characters, requires a
+separate `apply` command, verifies the approved response digest, and refuses a
+changed response or an existing target without `--force`. Use the skill when
+you want that path followed consistently, or call `plan` and `apply` directly
+when you are managing the handoff yourself.
 
 This narrow scope also keeps the mechanics easy to inspect and test. The same
 spec, optional instruction skills, file contract, and guarded-write path work
