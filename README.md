@@ -39,10 +39,12 @@ The skill defines the procedure and asks for approval; CliSpecForge enforces
 the mechanical handoff checks. Skill instructions depend on the agent and its
 host following them. CliSpecForge independently parses the response, rejects
 unsafe or duplicate targets, escapes terminal control characters, requires a
-separate `apply` command, verifies the approved response digest, and refuses a
-changed response or an existing target without `--force`. Use the skill when
-you want that path followed consistently, or call `plan` and `apply` directly
-when you are managing the handoff yourself.
+separate `apply` command, refuses an existing target without `--force`, and,
+when `apply` receives the digest `plan` reported, refuses a response that
+changed after approval. Use the skill when you want that path followed
+consistently, or call `plan` and `apply` directly when you are managing the
+handoff yourself. Pass `--expect-sha256` yourself in that case; without it
+`apply` writes whatever the response currently contains.
 
 This narrow scope also keeps the mechanics easy to inspect and test. The same
 spec, optional instruction skills, file contract, and guarded-write path work
